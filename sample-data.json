@@ -1,0 +1,215 @@
+{
+  "users": [
+    {
+      "id": "clh1234user1",
+      "email": "john@example.com",
+      "password": "hashedPassword123",
+      "name": "John Doe",
+      "username": "johndoe",
+      "bio": "Product enthusiast and tech lover",
+      "avatarUrl": "https://example.com/avatars/john.jpg",
+      "website": "https://johndoe.com",
+      "twitter": "@johndoe",
+      "github": "johndoe",
+      "isVerified": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "clh1234user2",
+      "email": "jane@example.com",
+      "password": "hashedPassword456",
+      "name": "Jane Smith",
+      "username": "janesmith",
+      "bio": "Developer & Designer",
+      "avatarUrl": "https://example.com/avatars/jane.jpg",
+      "website": "https://janesmith.dev",
+      "twitter": "@janesmith",
+      "github": "janesmith",
+      "isVerified": true,
+      "createdAt": "2024-01-02T00:00:00Z",
+      "updatedAt": "2024-01-02T00:00:00Z"
+    },
+    {
+      "id": "clh1234user3",
+      "email": "sam@example.com",
+      "password": "hashedPassword789",
+      "name": "Sam Wilson",
+      "username": "samwilson",
+      "bio": "AI Enthusiast and Tech Blogger",
+      "avatarUrl": "https://example.com/avatars/sam.jpg",
+      "website": "https://samwilson.dev",
+      "twitter": "@samwilson",
+      "github": "samwilson",
+      "isVerified": false,
+      "createdAt": "2024-01-03T00:00:00Z",
+      "updatedAt": "2024-01-03T00:00:00Z"
+    },
+    {
+      "id": "clh1234user4",
+      "email": "alice@example.com",
+      "password": "hashedPassword321",
+      "name": "Alice Johnson",
+      "username": "alicej",
+      "bio": "Designer and artist",
+      "avatarUrl": "https://example.com/avatars/alice.jpg",
+      "website": "https://alicejohnson.art",
+      "twitter": "@alicej",
+      "github": "alicejohnson",
+      "isVerified": true,
+      "createdAt": "2024-01-04T00:00:00Z",
+      "updatedAt": "2024-01-04T00:00:00Z"
+    },
+    {
+      "id": "clh1234user5",
+      "email": "mike@example.com",
+      "password": "hashedPassword654",
+      "name": "Mike Brown",
+      "username": "mikebrown",
+      "bio": "Tech enthusiast and startup advisor",
+      "avatarUrl": "https://example.com/avatars/mike.jpg",
+      "website": "https://mikebrown.tech",
+      "twitter": "@mikebrown",
+      "github": "mikebrown",
+      "isVerified": false,
+      "createdAt": "2024-01-05T00:00:00Z",
+      "updatedAt": "2024-01-05T00:00:00Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "clh1234prod1",
+      "name": "SuperApp",
+      "slug": "superapp",
+      "tagline": "The all-in-one productivity tool",
+      "description": "SuperApp helps you manage your tasks, meetings, and projects in one place.",
+      "website": "https://superapp.example.com",
+      "thumbnail": "https://example.com/products/superapp/thumbnail.jpg",
+      "pricing": "FREE",
+      "launchDate": "2024-01-15T00:00:00Z",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z",
+      "makerId": "clh1234user1",
+      "images": [
+        {
+          "id": "clh1234img1",
+          "url": "https://example.com/products/superapp/image1.jpg",
+          "productId": "clh1234prod1"
+        },
+        {
+          "id": "clh1234img2",
+          "url": "https://example.com/products/superapp/image2.jpg",
+          "productId": "clh1234prod1"
+        }
+      ]
+    },
+    {
+      "id": "clh1234prod2",
+      "name": "CodeGenie",
+      "slug": "codegenie",
+      "tagline": "Your AI-powered coding assistant",
+      "description": "CodeGenie helps you write, debug, and optimize code effortlessly.",
+      "website": "https://codegenie.example.com",
+      "thumbnail": "https://example.com/products/codegenie/thumbnail.jpg",
+      "pricing": "PREMIUM",
+      "launchDate": "2024-02-01T00:00:00Z",
+      "createdAt": "2024-01-05T00:00:00Z",
+      "updatedAt": "2024-01-05T00:00:00Z",
+      "makerId": "clh1234user2",
+      "images": [
+        {
+          "id": "clh1234img3",
+          "url": "https://example.com/products/codegenie/image1.jpg",
+          "productId": "clh1234prod2"
+        }
+      ]
+    },
+    {
+      "id": "clh1234prod3",
+      "name": "ArtBoard",
+      "slug": "artboard",
+      "tagline": "A digital workspace for artists",
+      "description": "ArtBoard offers advanced tools for creating and sharing digital art.",
+      "website": "https://artboard.example.com",
+      "thumbnail": "https://example.com/products/artboard/thumbnail.jpg",
+      "pricing": "FREEMIUM",
+      "launchDate": "2024-02-15T00:00:00Z",
+      "createdAt": "2024-01-10T00:00:00Z",
+      "updatedAt": "2024-01-10T00:00:00Z",
+      "makerId": "clh1234user4",
+      "images": [
+        {
+          "id": "clh1234img4",
+          "url": "https://example.com/products/artboard/image1.jpg",
+          "productId": "clh1234prod3"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": "clh1234cat1",
+      "name": "Productivity",
+      "description": "Tools to enhance your workflow"
+    },
+    {
+      "id": "clh1234cat2",
+      "name": "Developer Tools",
+      "description": "Software for developers"
+    },
+    {
+      "id": "clh1234cat3",
+      "name": "AI Tools",
+      "description": "Innovative AI-powered solutions"
+    },
+    {
+      "id": "clh1234cat4",
+      "name": "Creative Tools",
+      "description": "Applications for artists and creators"
+    }
+  ],
+  "categoriesOnProducts": [
+    {
+      "productId": "clh1234prod1",
+      "categoryId": "clh1234cat1"
+    },
+    {
+      "productId": "clh1234prod2",
+      "categoryId": "clh1234cat2"
+    },
+    {
+      "productId": "clh1234prod3",
+      "categoryId": "clh1234cat4"
+    }
+  ],
+  "comments": [
+    {
+      "id": "clh1234com1",
+      "content": "This looks amazing! Can't wait to try it out.",
+      "createdAt": "2024-01-15T12:00:00Z",
+      "updatedAt": "2024-01-15T12:00:00Z",
+      "userId": "clh1234user2",
+      "productId": "clh1234prod1",
+      "parentId": null
+    },
+    {
+      "id": "clh1234com2",
+      "content": "Thanks! Let me know what you think after trying it.",
+      "createdAt": "2024-01-15T12:30:00Z",
+      "updatedAt": "2024-01-15T12:30:00Z",
+      "userId": "clh1234user1",
+      "productId": "clh1234prod1",
+      "parentId": "clh1234com1"
+    },
+    {
+      "id": "clh1234com3",
+      "content": "Great tool for artists! I love the interface.",
+      "createdAt": "2024-02-16T10:00:00Z",
+      "updatedAt": "2024-02-16T10:00:00Z",
+      "userId": "clh1234user5",
+      "productId": "clh1234prod3",
+      "parentId": null
+    }
+  ]
+}
+ 
