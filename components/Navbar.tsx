@@ -15,16 +15,19 @@ const Navbar = async () => {
       <MaxWidthWrapper>
         <div className="flex h-14 items-center justify-between border-b border-zinc-200">
           <Link href="/" className="flex z-40 font-semibold gap-2 items-center">
-            <Image src="/finalbabu.svg" alt="LaunchList" width={40} height={40} />
-            <span>LaunchList</span>
+            <Image src="/finalbabu.svg" alt="ProductLaunches" width={40} height={40} />
+            <span className="font-sans">Product Launches</span>
           </Link>
 
+
           {/* todo: add mobile navbar will be done later. */}
+          <MobileNav isAuth={!!user} />
 
           <div className="hidden items-center space-x-4 sm:flex">
-            <>
-              <LoginLink className={buttonVariants({ variant: "ghost", size: "sm" })}>
-                Sign in
+            {!user ? (
+              <>
+                <LoginLink className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                  Sign in
 
               </LoginLink>
               <RegisterLink className={buttonVariants({ variant: "signin", size: "sm" })}>
@@ -33,7 +36,22 @@ const Navbar = async () => {
                 Submit
 
               </RegisterLink>
-            </>
+            </>):(
+              <>
+                <Link href="/dashboard" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                  Dashboard
+                </Link>
+                <UserAccountNav
+                  name={
+                    !user.given_name || !user.family_name
+                      ? "Your Account"
+                      : `${user.given_name} ${user.family_name}`
+                  }
+                  email={user.email ?? ""}
+                  imageUrl={user.picture ?? ""}
+                />
+              </>
+            )}
 
           </div>
 
