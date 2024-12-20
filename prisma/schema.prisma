@@ -170,3 +170,13 @@ enum NotificationType {
   PRODUCT_LAUNCH
   COLLECTION_MENTION
 }
+
+model FileUpload {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  url       String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

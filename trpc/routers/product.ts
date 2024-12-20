@@ -3,6 +3,49 @@ import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 
 export const productRouter = router({
+  // Add this new procedure
+  getDashboardProducts: privateProcedure
+    .query(async ({ ctx }) => {
+      const [products, totalVotes, totalComments] = await Promise.all([
+        // Get user's products
+        db.product.findMany({
+          where: { makerId: ctx.userId },
+          include: {
+            _count: {
+              select: {
+                votes: true,
+                comments: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        // Get total votes across all user's products
+        db.vote.count({
+          where: {
+            product: {
+              makerId: ctx.userId,
+            },
+          },
+        }),
+        // Get total comments across all user's products
+        db.comment.count({
+          where: {
+            product: {
+              makerId: ctx.userId,
+            },
+          },
+        }),
+      ]);
+
+      return {
+        products,
+        totalProducts: products.length,
+        totalVotes,
+        totalComments,
+      };
+    }),
+
   // Create new product
   create: privateProcedure
     .input(z.object({
@@ -83,6 +126,36 @@ export const productRouter = router({
           userId: ctx.userId,
           productId: input.productId,
         },
+      });
+    }),
+
+  // Add this new procedure for image uploads
+  uploadImage: privateProcedure
+    .input(z.object({
+      url: z.string().url(),
+      productId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return db.productImage.create({
+        data: {
+          url: input.url,
+          productId: input.productId,
+        },
+      });
+    }),
+
+  // Add this procedure to handle multiple images
+  uploadImages: privateProcedure
+    .input(z.object({
+      urls: z.array(z.string().url()),
+      productId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return db.productImage.createMany({
+        data: input.urls.map(url => ({
+          url,
+          productId: input.productId,
+        })),
       });
     }),
 }); 
