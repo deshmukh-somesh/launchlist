@@ -35,13 +35,21 @@ export const categoryRouter = router({
       });
     }),
 
-  getAll: publicProcedure.query(async ({ ctx }) => {
-    return db.category.findMany({
-      include: {
+  getAll: publicProcedure.query(async () => {
+    const categories = await db.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
         _count: {
           select: { products: true },
         },
       },
+      orderBy: {
+        name: 'asc', // Sort alphabetically
+      },
     });
+    
+    return categories;
   }),
 }); 

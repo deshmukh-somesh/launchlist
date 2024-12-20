@@ -1,6 +1,7 @@
 import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '@/db';
+
 export const commentRouter = router({
   create: privateProcedure
     .input(z.object({
@@ -41,23 +42,93 @@ export const commentRouter = router({
       return db.comment.delete({
         where: {
           id: input.commentId,
-          userId: ctx.userId, // Ensure user owns the comment
+          userId: ctx.userId,
         },
       });
     }),
 
   getProductComments: publicProcedure
-    .input(z.object({ productId: z.string() }))
+    .input(z.object({
+      productId: z.string(),
+      limit: z.number().min(1).max(50).default(10),
+      cursor: z.number().default(0),
+    }))
     .query(async ({ ctx, input }) => {
-      return db.comment.findMany({
-        where: { productId: input.productId },
+      const { productId, cursor, limit } = input;
+
+      const items = await db.comment.findMany({
+        take: limit + 1,
+        skip: cursor,
+        where: { 
+          productId,
+          parentId: null // Only get top-level comments
+        },
         include: {
           user: true,
           replies: {
-            include: { user: true },
+            include: { 
+              user: true,
+            },
+            take: 3, // Limit initial replies
+            orderBy: {
+              createdAt: 'desc'
+            }
           },
+          _count: {
+            select: {
+              replies: true
+            }
+          }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: 'desc'
+        },
       });
+
+      let nextCursor: number | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = cursor + limit;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
+
+  getReplies: publicProcedure
+    .input(z.object({
+      commentId: z.string(),
+      limit: z.number().min(1).max(50).default(10),
+      cursor: z.number().default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { commentId, cursor, limit } = input;
+
+      const replies = await db.comment.findMany({
+        take: limit + 1,
+        skip: cursor,
+        where: { 
+          parentId: commentId
+        },
+        include: {
+          user: true,
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+      });
+
+      let nextCursor: number | undefined = undefined;
+      if (replies.length > limit) {
+        const nextItem = replies.pop();
+        nextCursor = cursor + limit;
+      }
+
+      return {
+        items: replies,
+        nextCursor,
+      };
     }),
 }); 
