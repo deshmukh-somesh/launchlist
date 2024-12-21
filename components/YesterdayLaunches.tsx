@@ -3,6 +3,7 @@
 import { trpc } from "@/app/_trpc/client";
 import LoadingSkeleton from "./LoadingSkeleton";
 import ProductCard from "./ProductCard";
+import { keepPreviousData } from "@tanstack/react-query";
 
 interface Product {
   id: string;
@@ -12,6 +13,7 @@ interface Product {
   thumbnail: string | null;
   createdAt: string;
   launchDate: string;
+  website: string;
   categories: {
     category: {
       id: string;
@@ -30,7 +32,11 @@ interface Product {
 }
 
 export default function YesterdayLaunches() {
-  const { data: products, isLoading } = trpc.product.getYesterday.useQuery();
+  const { data: products, isLoading } = trpc.product.getYesterday.useQuery(undefined, {
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData
+  });
 
   if (isLoading) {
     return <LoadingSkeleton />;

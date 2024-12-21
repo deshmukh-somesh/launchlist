@@ -3,32 +3,15 @@
 import { trpc } from "@/app/_trpc/client";
 import LoadingSkeleton from "./LoadingSkeleton";
 import ProductCard from "./ProductCard";
-
-interface Product {
-  id: string;
-  slug: string;
-  name: string;
-  tagline: string;
-  thumbnail: string | null;
-  createdAt: string;
-  launchDate: string;
-  categories: {
-    category: {
-      id: string;
-      name: string;
-    };
-  }[];
-  maker: {
-    name: string | null;
-    avatarUrl: string | null;
-  };
-  _count: {
-    votes: number;
-  };
-}
+import { keepPreviousData } from "@tanstack/react-query";
+import type { Product } from "@/types/product";
 
 export default function TodaysWinners() {
-  const { data: products, isLoading } = trpc.product.getTodaysWinners.useQuery();
+  const { data: products, isLoading } = trpc.product.getTodaysWinners.useQuery(undefined, {
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData
+  });
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -36,22 +19,37 @@ export default function TodaysWinners() {
 
   return (
     <div className="py-12">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-8">Today's Winners 🏆</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products?.map((product: Product) => (
-            <ProductCard 
-              key={product.id} 
-              product={{
-                ...product,
-                createdAt: new Date(product.createdAt),
-                launchDate: new Date(product.launchDate),
-                categories: product.categories
-              }}
-              variant="winner"
-            />
-          ))}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center gap-2 mb-8">
+          <h2 className="text-3xl font-bold">Today's Winners 🏆</h2>
+          <span className="text-sm text-gray-500">
+            (Top voted products launched today)
+          </span>
         </div>
+        
+        {products && products.length > 0 ? (
+          <div className="space-y-6">
+            {products.map((product: Product) => (
+              <div key={product.id} className="w-full">
+                <ProductCard 
+                  key={product.id} 
+                  product={{
+                    ...product,
+                    createdAt: new Date(product.createdAt),
+                    launchDate: new Date(product.launchDate),
+                    categories: product.categories,
+                    website: product.website // Ensure website is included
+                  }}
+                  variant="winner"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-gray-500">
+            No winners yet today. Check back later!
+          </p>
+        )}
       </div>
     </div>
   );

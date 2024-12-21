@@ -6,9 +6,12 @@ export interface Product {
   thumbnail: string | null;
   createdAt: string;
   launchDate: string;
+  website: string;
   categories: {
-    id: string;
-    name: string;
+    category: {
+      id: string;
+      name: string;
+    };
   }[];
   maker: {
     name: string | null;

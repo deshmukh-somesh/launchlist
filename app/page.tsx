@@ -1,4 +1,6 @@
 "use client"
+import { useEffect } from 'react';
+import { trpc } from "@/app/_trpc/client";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import { Button , buttonVariants} from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -8,8 +10,20 @@ import Link from "next/link";
 import TodaysWinners from "@/components/TodaysWinners";
 import YesterdayLaunches from "@/components/YesterdayLaunches";
 import UpcomingLaunches from "@/components/UpcomingLaunches";
+import { Suspense } from 'react';
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 
 export default function Home() {
+  // Pre-fetch data
+  const utils = trpc.useContext();
+  
+  useEffect(() => {
+    // Pre-fetch all product lists
+    utils.product.getUpcoming.prefetch();
+    utils.product.getTodaysWinners.prefetch();
+    utils.product.getYesterday.prefetch();
+  }, []);
+
   return (
     <>
      <MaxWidthWrapper className="mb-12 mt-28 sm:mt-40 flex flex-col items-center justify-center text-center">
@@ -37,9 +51,25 @@ export default function Home() {
      </MaxWidthWrapper>
       {/* <TrendingProducts /> */}
      {/* <FeaturedCategories /> */}
-     <UpcomingLaunches />
-     <TodaysWinners />
-     <YesterdayLaunches />    
+     <div className="max-w-7xl mx-auto px-4 space-y-16">
+       <Suspense fallback={<LoadingSkeleton />}>
+         <section className="bg-white rounded-xl shadow-sm">
+           <UpcomingLaunches />
+         </section>
+       </Suspense>
+
+       <Suspense fallback={<LoadingSkeleton />}>
+         <section className="bg-white rounded-xl shadow-sm">
+           <TodaysWinners />
+         </section>
+       </Suspense>
+
+       <Suspense fallback={<LoadingSkeleton />}>
+         <section className="bg-white rounded-xl shadow-sm">
+           <YesterdayLaunches />
+         </section>
+       </Suspense>
+     </div>
    </>
   );
 }

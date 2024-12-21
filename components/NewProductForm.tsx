@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type FormInputs = {
   name: string;
@@ -19,12 +20,45 @@ export default function NewProductForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>();
+  // Get tomorrow's date for minimum launch date
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split('T')[0];
+  
+  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
+    defaultValues: {
+      pricing: 'FREE',
+      launchDate: minDate // Set default to tomorrow
+    }
+  });
+
+  const utils = trpc.useContext();
   const createProduct = trpc.product.create.useMutation({
-    onSuccess: () => {
-      router.push('/dashboard');
+    onSuccess: async () => {
+      // Invalidate all queries to refresh data everywhere
+      await Promise.all([
+        utils.product.getDashboardProducts.invalidate(),
+        utils.product.getUpcoming.invalidate(),
+        utils.product.getTodaysWinners.invalidate(),
+        utils.product.getYesterday.invalidate(),
+      ]);
+
+      // Wait for data to be refreshed
+      await Promise.all([
+        utils.product.getUpcoming.refetch(),
+        utils.product.getTodaysWinners.refetch(),
+        utils.product.getYesterday.refetch(),
+      ]);
+      
+      toast.success('Product created successfully!');
+      
+      // Redirect to home page to see the new product in upcoming launches
+      router.push('/');
       router.refresh();
     },
+    onError: (error) => {
+      toast.error(error.message);
+    }
   });
 
   const onSubmit = async (data: FormInputs) => {
@@ -105,15 +139,34 @@ export default function NewProductForm() {
           <label className="block mb-1">Launch Date</label>
           <input
             type="date"
-            {...register("launchDate", { required: "Launch date is required" })}
+            {...register("launchDate", { 
+              required: "Launch date is required",
+              validate: (value) => {
+                const selectedDate = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Check if selected date is at least tomorrow
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                return selectedDate >= tomorrow || 
+                  "Launch date must be at least tomorrow";
+              }
+            })}
+            min={minDate} // Prevent selecting dates before tomorrow
             className="w-full p-2 border rounded"
           />
+          {errors.launchDate && (
+            <p className="text-red-500 text-sm mt-1">{errors.launchDate.message}</p>
+          )}
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 
+                   disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isSubmitting ? "Creating..." : "Create Product"}
         </button>

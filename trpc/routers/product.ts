@@ -6,27 +6,26 @@ export const productRouter = router({
 
     getUpcoming: publicProcedure.query(async ({ ctx }) => {
         const today = new Date();
-        return db.product.findMany({
+        today.setHours(0, 0, 0, 0); // Set to start of day
+         return db.product.findMany({
           where: {
             launchDate: {
-              gt: today
+              gt: today // Get products with launch dates after today
             }
+          },
+          orderBy: {
+            launchDate: 'asc'
           },
           include: {
             categories: {
               include: {
-                category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  }
-                }
+                category: true
               }
             },
             maker: {
               select: {
                 name: true,
-                avatarUrl: true,
+                avatarUrl: true
               }
             },
             _count: {
@@ -34,12 +33,9 @@ export const productRouter = router({
                 votes: true
               }
             }
-          },
-          orderBy: {
-            launchDate: 'asc'
           }
         });
-      }),
+       }),
        getYesterday: publicProcedure.query(async ({ ctx }) => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -84,41 +80,88 @@ export const productRouter = router({
           }
         });
       }),
-       getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+    //    getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+    //     const today = new Date();
+    //     today.setHours(0, 0, 0, 0);
+        
+    //     const tomorrow = new Date(today);
+    //     tomorrow.setDate(tomorrow.getDate() + 1);
+    //      return db.product.findMany({
+    //       where: {
+    //         launchDate: {
+    //           gte: today,
+    //           lt: tomorrow
+    //         }
+    //       },
+    //       select: {
+    //         id: true,
+    //         slug: true,
+    //         name: true,
+    //         tagline: true,
+    //         thumbnail: true,
+    //         createdAt: true,
+    //         launchDate: true,
+    //         categories: {
+    //           include: {
+    //             category: {
+    //               select: {
+    //                 id: true,
+    //                 name: true,
+    //               }
+    //             }
+    //           }
+    //         },
+    //         maker: {
+    //           select: {
+    //             name: true,
+    //             avatarUrl: true,
+    //           }
+    //         },
+    //         _count: {
+    //           select: {
+    //             votes: true
+    //           }
+    //         }
+    //       },
+    //       orderBy: {
+    //         votes: {
+    //           _count: 'desc'
+    //         }
+    //       },
+    //       take: 3
+    //     });
+    //   }),
+
+    getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-         return db.product.findMany({
+         // Get products launched today with most votes
+        const winners = await db.product.findMany({
           where: {
             launchDate: {
               gte: today,
               lt: tomorrow
             }
           },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            tagline: true,
-            thumbnail: true,
-            createdAt: true,
-            launchDate: true,
+          orderBy: {
+            votes: {
+              _count: 'desc' // Order by vote count descending
+            }
+          },
+          take: 3, // Get top 3 winners
+          include: {
             categories: {
               include: {
-                category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  }
-                }
+                category: true
               }
             },
             maker: {
               select: {
                 name: true,
-                avatarUrl: true,
+                avatarUrl: true
               }
             },
             _count: {
@@ -126,15 +169,10 @@ export const productRouter = router({
                 votes: true
               }
             }
-          },
-          orderBy: {
-            votes: {
-              _count: 'desc'
-            }
-          },
-          take: 3
+          }
         });
-      }),
+         return winners;
+       }),
   // Add this new procedure
   getDashboardProducts: privateProcedure
     .query(async ({ ctx }) => {
