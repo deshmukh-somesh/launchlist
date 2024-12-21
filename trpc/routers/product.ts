@@ -3,6 +3,138 @@ import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 
 export const productRouter = router({
+
+    getUpcoming: publicProcedure.query(async ({ ctx }) => {
+        const today = new Date();
+        return db.product.findMany({
+          where: {
+            launchDate: {
+              gt: today
+            }
+          },
+          include: {
+            categories: {
+              include: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                }
+              }
+            },
+            maker: {
+              select: {
+                name: true,
+                avatarUrl: true,
+              }
+            },
+            _count: {
+              select: {
+                votes: true
+              }
+            }
+          },
+          orderBy: {
+            launchDate: 'asc'
+          }
+        });
+      }),
+       getYesterday: publicProcedure.query(async ({ ctx }) => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+         return db.product.findMany({
+          where: {
+            launchDate: {
+              gte: yesterday,
+              lt: today
+            }
+          },
+          include: {
+            categories: {
+              include: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                }
+              }
+            },
+            maker: {
+              select: {
+                name: true,
+                avatarUrl: true,
+              }
+            },
+            _count: {
+              select: {
+                votes: true
+              }
+            }
+          },
+          orderBy: {
+            votes: {
+              _count: 'desc'
+            }
+          }
+        });
+      }),
+       getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+         return db.product.findMany({
+          where: {
+            launchDate: {
+              gte: today,
+              lt: tomorrow
+            }
+          },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            tagline: true,
+            thumbnail: true,
+            createdAt: true,
+            launchDate: true,
+            categories: {
+              include: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                }
+              }
+            },
+            maker: {
+              select: {
+                name: true,
+                avatarUrl: true,
+              }
+            },
+            _count: {
+              select: {
+                votes: true
+              }
+            }
+          },
+          orderBy: {
+            votes: {
+              _count: 'desc'
+            }
+          },
+          take: 3
+        });
+      }),
   // Add this new procedure
   getDashboardProducts: privateProcedure
     .query(async ({ ctx }) => {
@@ -54,27 +186,53 @@ export const productRouter = router({
       tagline: z.string(),
       description: z.string(),
       website: z.string().url(),
-      thumbnail: z.string().optional(),
+      thumbnail: z.string().nullable(),
       pricing: z.enum(['FREE', 'PAID', 'SUBSCRIPTION']),
-      launchDate: z.date(),
+      launchDate: z.string().transform((str) => new Date(str)),
       categoryIds: z.array(z.string()),
       images: z.array(z.string()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      return db.product.create({
+      const { categoryIds, images, ...productData } = input;
+
+      const product = await db.product.create({
         data: {
-          ...input,
+          ...productData,
           makerId: ctx.userId,
           categories: {
-            create: input.categoryIds.map(categoryId => ({
+            create: categoryIds.map(categoryId => ({
               categoryId,
             })),
           },
-          images: input.images ? {
-            create: input.images.map(url => ({ url })),
-          } : undefined,
+          ...(images && images.length > 0 && {
+            images: {
+              create: images.map(url => ({
+                url,
+              })),
+            },
+          }),
+        },
+        include: {
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+          maker: {
+            select: {
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          _count: {
+            select: {
+              votes: true,
+            },
+          },
         },
       });
+
+      return product;
     }),
 
   // Get product details

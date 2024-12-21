@@ -1,6 +1,7 @@
 import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '@/db';
+import { TRPCError } from '@trpc/server';
 
 export const categoryRouter = router({
   create: privateProcedure
@@ -35,21 +36,47 @@ export const categoryRouter = router({
       });
     }),
 
-  getAll: publicProcedure.query(async () => {
-    const categories = await db.category.findMany({
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        _count: {
-          select: { products: true },
-        },
-      },
-      orderBy: {
-        name: 'asc', // Sort alphabetically
-      },
-    });
+//   getAll: publicProcedure.query(async () => {
+//     const categories = await db.category.findMany({
+//       select: {
+//         id: true,
+//         name: true,
+//         description: true,
+//         _count: {
+//           select: { products: true },
+//         },
+//       },
+//       orderBy: {
+//         name: 'asc', // Sort alphabetically
+//       },
+//     });
     
-    return categories;
-  }),
+//     return categories;
+//   }),
+
+getAll: publicProcedure.query(async () => {
+    try {
+        const categories = await db.category.findMany({
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                _count: {
+                    select: { 
+                        products: true 
+                    }
+                }
+            },
+            orderBy: {
+                name: 'asc'
+            }
+        });
+        
+        return categories || []; // Ensure we always return an array
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        return []; // Return empty array instead of throwing error
+    }
+}),
+
 }); 
