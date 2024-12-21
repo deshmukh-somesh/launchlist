@@ -13,6 +13,7 @@ import {
   FolderHeart,
   Plus
 } from 'lucide-react';
+import Link from 'next/link';
 
 // Types based on your schema
 type DashboardProduct = {
@@ -87,10 +88,12 @@ export default function DashboardMain() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">My Products</h2>
-              <Button onClick={handleNewProduct}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Product
-              </Button>
+              <Link href="/dashboard/products/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Product
+                </Button>
+              </Link>
             </div>
 
             {/* Products List */}
