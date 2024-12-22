@@ -47,6 +47,7 @@ model Product {
   launchDate  DateTime
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  isLaunched  Boolean        @default(false)
 
   // Relations
   maker       User                    @relation(fields: [makerId], references: [id])
