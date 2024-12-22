@@ -13,6 +13,7 @@ interface ProductCardProps {
         thumbnail: string | null;
         createdAt: Date;
         launchDate: Date;
+        isLaunched: boolean;
         website: string;
         categories: {
             category: {

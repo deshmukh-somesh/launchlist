@@ -14,6 +14,8 @@ import {
   Plus
 } from 'lucide-react';
 import Link from 'next/link';
+import { format, isPast } from 'date-fns';
+import { toast } from 'sonner';
 
 // Types based on your schema
 type DashboardProduct = {
@@ -26,11 +28,28 @@ type DashboardProduct = {
     votes: number;
     comments: number;
   };
+  isLaunched: boolean;
+  launchDate: string;
 };
 
 export default function DashboardMain() {
   const router = useRouter();
+  const utils = trpc.useContext();
   const { data, isLoading } = trpc.product.getDashboardProducts.useQuery();
+
+  const launchProduct = trpc.product.launch.useMutation({
+    onSuccess: async () => {
+      toast.success('Product launched successfully!');
+      await Promise.all([
+        utils.product.getDashboardProducts.invalidate(),
+        utils.product.getUpcoming.invalidate(),
+        utils.product.getTodaysWinners.invalidate(),
+      ]);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    }
+  });
 
   const handleNewProduct = () => {
     router.push('/dashboard/products/new');
@@ -153,6 +172,30 @@ export default function DashboardMain() {
                               <MessageCircle className="h-4 w-4" />
                               {product._count.comments}
                             </span>
+                          </div>
+
+                          <div className="flex gap-2 mt-4">
+                            {!product.isLaunched && (
+                              <>
+                                <Link href={`/dashboard/products/${product.id}/edit`}>
+                                  <Button variant="outline">
+                                    Edit
+                                  </Button>
+                                </Link>
+                                <Button
+                                  onClick={() => launchProduct.mutate({ productId: product.id })}
+                                  variant="default"
+                                >
+                                  Launch Product
+                                </Button>
+                              </>
+                            )}
+                            {product.isLaunched && (
+                              <span className="text-sm text-green-600 flex items-center gap-1">
+                                <Rocket className="h-4 w-4" />
+                                Launched
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

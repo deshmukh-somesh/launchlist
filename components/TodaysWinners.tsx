@@ -38,7 +38,8 @@ export default function TodaysWinners() {
                     createdAt: new Date(product.createdAt),
                     launchDate: new Date(product.launchDate),
                     categories: product.categories,
-                    website: product.website // Ensure website is included
+                    website: product.website,
+                    isLaunched: product.isLaunched
                   }}
                   variant="winner"
                 />

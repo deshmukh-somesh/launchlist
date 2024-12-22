@@ -1,8 +1,27 @@
 import { db } from '@/db';
 import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
+import { isPast } from 'date-fns';
+import { TRPCError } from '@trpc/server';
 
 export const productRouter = router({
+
+    launch: privateProcedure
+   .input(z.object({ productId: z.string() }))
+   .mutation(async ({ ctx, input }) => {
+     const product = await db.product.findUnique({
+       where: { id: input.productId }
+     });
+      if (!product) throw new Error('Product not found');
+     if (product.isLaunched) throw new Error('Product already launched');
+     if (isPast(product.launchDate)) {
+       throw new Error('Launch date has passed');
+     }
+      return db.product.update({
+       where: { id: input.productId },
+       data: { isLaunched: true }
+     });
+   }),
 
     getUpcoming: publicProcedure.query(async ({ ctx }) => {
         const today = new Date();
@@ -11,7 +30,8 @@ export const productRouter = router({
           where: {
             launchDate: {
               gt: today // Get products with launch dates after today
-            }
+            },
+            isLaunched: true
           },
           orderBy: {
             launchDate: 'asc'
@@ -180,7 +200,14 @@ export const productRouter = router({
         // Get user's products
         db.product.findMany({
           where: { makerId: ctx.userId },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            tagline: true,
+            thumbnail: true,
+            pricing: true,
+            launchDate: true,
+            isLaunched: true,
             _count: {
               select: {
                 votes: true,
@@ -226,11 +253,25 @@ export const productRouter = router({
       website: z.string().url(),
       thumbnail: z.string().nullable(),
       pricing: z.enum(['FREE', 'PAID', 'SUBSCRIPTION']),
-      launchDate: z.string().transform((str) => new Date(str)),
+      launchDate: z.string()
+        .transform((str) => new Date(str))
+        .refine((date) => date > new Date(), {
+          message: "Launch date must be in the future"
+        }),
       categoryIds: z.array(z.string()),
       images: z.array(z.string()).optional(),
+      isLaunched: z.boolean().default(false)
     }))
     .mutation(async ({ ctx, input }) => {
+      // Check if slug is unique
+      const existingProduct = await db.product.findUnique({
+        where: { slug: input.slug }
+      });
+
+      if (existingProduct) {
+        throw new Error('A product with this slug already exists');
+      }
+
       const { categoryIds, images, ...productData } = input;
 
       const product = await db.product.create({
@@ -274,24 +315,47 @@ export const productRouter = router({
     }),
 
   // Get product details
-  getProduct: publicProcedure
-    .input(z.object({ slug: z.string() }))
-    .query(async ({ ctx, input }) => {
-      return db.product.findUnique({
-        where: { slug: input.slug },
-        include: {
-          maker: true,
-          categories: {
-            include: { category: true },
+  getProductById: privateProcedure
+  .input(z.object({ id: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const product = await db.product.findUnique({
+      where: { id: input.id },
+      include: {
+        categories: {
+          include: {
+            category: true,
           },
-          comments: {
-            include: { user: true },
-          },
-          votes: true,
-          images: true,
         },
+        maker: {
+          select: {
+            name: true,
+            avatarUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            votes: true,
+          },
+        },
+      },
+    });
+
+    if (!product) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Product not found',
       });
-    }),
+    }
+
+    if (product.makerId !== ctx.userId) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Not authorized to view this product',
+      });
+    }
+
+    return product;
+  }),
 
   // Toggle vote
   toggleVote: privateProcedure
@@ -352,6 +416,74 @@ export const productRouter = router({
           url,
           productId: input.productId,
         })),
+      });
+    }),
+
+  update: privateProcedure
+    .input(z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      tagline: z.string(),
+      description: z.string(),
+      website: z.string().url(),
+      thumbnail: z.string().nullable(),
+      pricing: z.enum(['FREE', 'PAID', 'SUBSCRIPTION']),
+      launchDate: z.string().transform((str) => new Date(str)),
+      categoryIds: z.array(z.string()),
+      images: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, categoryIds, images, ...updateData } = input;
+
+      // Check if product exists and belongs to user
+      const existingProduct = await db.product.findUnique({
+        where: { id },
+        include: { categories: true }
+      });
+
+      if (!existingProduct) throw new Error('Product not found');
+      if (existingProduct.makerId !== ctx.userId) {
+        throw new Error('Not authorized to edit this product');
+      }
+
+      return db.product.update({
+        where: { id },
+        data: {
+          ...updateData,
+          categories: {
+            deleteMany: {},
+            create: categoryIds.map(categoryId => ({
+              categoryId,
+            })),
+          },
+          ...(images && images.length > 0 && {
+            images: {
+              deleteMany: {},
+              create: images.map(url => ({
+                url,
+              })),
+            },
+          }),
+        },
+        include: {
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+          maker: {
+            select: {
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          _count: {
+            select: {
+              votes: true,
+            },
+          },
+        },
       });
     }),
 }); 

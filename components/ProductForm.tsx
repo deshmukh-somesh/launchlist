@@ -6,7 +6,7 @@ import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-type FormInputs = {
+export type ProductFormInputs = {
   name: string;
   slug: string;
   tagline: string;
@@ -17,7 +17,13 @@ type FormInputs = {
   isLaunched: boolean;
 };
 
-export default function NewProductForm() {
+interface ProductFormProps {
+  initialData?: ProductFormInputs;
+  productId?: string;
+  isEditing?: boolean;
+}
+
+export default function ProductForm({ initialData, productId, isEditing = false }: ProductFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -26,14 +32,15 @@ export default function NewProductForm() {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
   
-  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
-    defaultValues: {
+  const { register, handleSubmit, formState: { errors } } = useForm<ProductFormInputs>({
+    defaultValues: initialData || {
       pricing: 'FREE',
-      launchDate: minDate // Set default to tomorrow
+      launchDate: minDate
     }
   });
 
   const utils = trpc.useContext();
+  
   const createProduct = trpc.product.create.useMutation({
     onSuccess: async () => {
       toast.success('Product created successfully!');
@@ -45,16 +52,37 @@ export default function NewProductForm() {
     }
   });
 
-  const onSubmit = async (data: FormInputs) => {
+  const updateProduct = trpc.product.update.useMutation({
+    onSuccess: async () => {
+      toast.success('Product updated successfully!');
+      router.push('/dashboard');
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    }
+  });
+
+  const onSubmit = async (data: ProductFormInputs) => {
     setIsSubmitting(true);
     try {
-      await createProduct.mutate({
-        ...data,
-        thumbnail: null,
-        categoryIds: [],
-        images: [],
-        isLaunched: false
-      });
+      if (isEditing && productId) {
+        await updateProduct.mutate({
+          id: productId,
+          ...data,
+          thumbnail: null,
+          categoryIds: [],
+          images: []
+        });
+      } else {
+        await createProduct.mutate({
+          ...data,
+          thumbnail: null,
+          categoryIds: [],
+          images: [],
+          isLaunched: false
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -62,7 +90,9 @@ export default function NewProductForm() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        {isEditing ? 'Edit Product' : 'Add New Product'}
+      </h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block mb-1">Name</label>
@@ -127,19 +157,21 @@ export default function NewProductForm() {
             {...register("launchDate", { 
               required: "Launch date is required",
               validate: (value) => {
-                const selectedDate = new Date(value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                // Check if selected date is at least tomorrow
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                
-                return selectedDate >= tomorrow || 
-                  "Launch date must be at least tomorrow";
+                if (!isEditing) {
+                  const selectedDate = new Date(value);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  
+                  return selectedDate >= tomorrow || 
+                    "Launch date must be at least tomorrow";
+                }
+                return true;
               }
             })}
-            min={minDate} // Prevent selecting dates before tomorrow
+            min={!isEditing ? minDate : undefined}
             className="w-full p-2 border rounded"
           />
           {errors.launchDate && (
@@ -153,7 +185,8 @@ export default function NewProductForm() {
           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 
                    disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Creating..." : "Create Product"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : 
+                         (isEditing ? "Update Product" : "Create Product")}
         </button>
       </form>
     </div>

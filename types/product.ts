@@ -4,9 +4,10 @@ export interface Product {
   name: string;
   tagline: string;
   thumbnail: string | null;
-  createdAt: string;
-  launchDate: string;
+  createdAt: string | Date;
+  launchDate: string | Date;
   website: string;
+  isLaunched: boolean;
   categories: {
     category: {
       id: string;
@@ -17,7 +18,7 @@ export interface Product {
     name: string | null;
     avatarUrl: string | null;
   };
-  _count: {
+  _count?: {
     votes: number;
   };
 } 
