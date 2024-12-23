@@ -3,6 +3,7 @@ import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { isPast } from 'date-fns';
 import { TRPCError } from '@trpc/server';
+import { addDays, startOfDay, endOfDay } from 'date-fns';
 
 export const productRouter = router({
 
@@ -506,4 +507,119 @@ export const productRouter = router({
         where: { id: input.productId }
       });
     }),
+
+  // Get yesterday's winners (top 3)
+  getYesterdayWinners: publicProcedure.query(async ({ ctx }) => {
+    const yesterday = startOfDay(addDays(new Date(), -1));
+    const today = startOfDay(new Date());
+
+    return db.product.findMany({
+      where: {
+        launchDate: {
+          gte: yesterday,
+          lt: today
+        },
+        isLaunched: true
+      },
+      orderBy: {
+        votes: {
+          _count: 'desc'
+        }
+      },
+      take: 3, // Get top 3
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        },
+        maker: {
+          select: {
+            name: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            votes: true
+          }
+        }
+      }
+    });
+  }),
+
+  // Get past launches (paginated)
+  getPastLaunches: publicProcedure
+    .input(z.object({
+      cursor: z.string().nullish(),
+      limit: z.number().min(1).max(100).default(10),
+    }))
+    .query(async ({ ctx, input }) => {
+      const today = startOfDay(new Date());
+
+      const items = await db.product.findMany({
+        where: {
+          launchDate: {
+            lt: today
+          },
+          isLaunched: true
+        },
+        orderBy: {
+          launchDate: 'desc'
+        },
+        take: input.limit + 1,
+        cursor: input.cursor ? { id: input.cursor } : undefined,
+        include: {
+          categories: {
+            include: {
+              category: true
+            }
+          },
+          maker: {
+            select: {
+              name: true,
+              avatarUrl: true
+            }
+          },
+          _count: {
+            select: {
+              votes: true
+            }
+          }
+        }
+      });
+
+      let nextCursor: typeof input.cursor | undefined = undefined;
+      if (items.length > input.limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem!.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
+
+  // Get next launch time
+  getNextLaunch: publicProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+
+    const nextLaunch = await db.product.findFirst({
+      where: {
+        launchDate: {
+          gt: now
+        },
+        isLaunched: true
+      },
+      orderBy: {
+        launchDate: 'asc'
+      },
+      select: {
+        launchDate: true
+      }
+    });
+
+    return nextLaunch;
+  }),
 }); 
