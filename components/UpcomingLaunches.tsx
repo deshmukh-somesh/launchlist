@@ -1,101 +1,155 @@
+// "use client";
+
+// import { trpc } from "@/app/_trpc/client";
+// import { formatDistanceToNow, isTomorrow, differenceInSeconds } from "date-fns";
+// import { Badge } from "./ui/badge";
+// import { Clock } from "lucide-react";
+// import { useState, useEffect } from "react";
+// import ProductCard from "./ProductCard";
+
+// interface CountdownTime {
+//   hours: number;
+//   minutes: number;
+//   seconds: number;
+// }
+
+// export default function UpcomingLaunches() {
+//   const [countdown, setCountdown] = useState<CountdownTime>({ hours: 0, minutes: 0, seconds: 0 });
+  
+//   const { data: products } = trpc.product.getUpcoming.useQuery(
+//     undefined,
+//     {
+//       refetchInterval: 30000,
+//       refetchOnWindowFocus: true,
+//     }
+//   );
+
+//   // Filter for tomorrow's launches
+//   const tomorrowLaunches = products?.filter(product => 
+//     isTomorrow(new Date(product.launchDate))
+//   ).sort((a, b) => 
+//     new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime()
+//   ) ?? [];
+
+//   // Calculate countdown values
+//   const calculateTimeLeft = (targetDate: Date): CountdownTime => {
+//     const totalSeconds = Math.max(0, differenceInSeconds(targetDate, new Date()));
+    
+//     const hours = Math.floor(totalSeconds / 3600);
+//     const minutes = Math.floor((totalSeconds % 3600) / 60);
+//     const seconds = totalSeconds % 60;
+
+//     return { hours, minutes, seconds };
+//   };
+
+//   // Update countdown every second
+//   useEffect(() => {
+//     if (!tomorrowLaunches.length) return;
+
+//     const timer = setInterval(() => {
+//       const nextLaunch = new Date(tomorrowLaunches[0].launchDate);
+//       setCountdown(calculateTimeLeft(nextLaunch));
+//     }, 1000);
+
+//     return () => clearInterval(timer);
+//   }, [tomorrowLaunches]);
+
+//   // Format number to always show two digits
+//   const formatNumber = (num: number): string => {
+//     return num.toString().padStart(2, '0');
+//   };
+
+//   return (
+//     <div className="py-12">
+//       <div className="max-w-7xl mx-auto px-4">
+//         <div className="flex items-center justify-between mb-8">
+//           <h2 className="text-3xl font-bold">Tomorrow's Launches</h2>
+//           {tomorrowLaunches.length > 0 && (
+//             <div className="flex items-center gap-4">
+//               <Clock className="w-5 h-5 text-blue-600" />
+//               <div className="text-2xl font-mono font-bold text-blue-600">
+//                 {formatNumber(countdown.hours)}:{formatNumber(countdown.minutes)}:{formatNumber(countdown.seconds)}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+
+//         {tomorrowLaunches.length > 0 ? (
+//           <div className="space-y-6">
+//             {tomorrowLaunches.map((product) => (
+//               <div key={product.id} className="max-w-7xl mx-5">
+//                 <ProductCard 
+//                   product={{
+//                     ...product,
+//                     createdAt: new Date(product.createdAt),
+//                     launchDate: new Date(product.launchDate),
+//                     categories: product.categories
+//                   }}
+//                   variant="upcoming"
+//                 />
+//               </div>
+//             ))}
+//           </div>
+//         ) : (
+//           <p className="text-center text-gray-500">
+//             No launches scheduled for tomorrow.
+//           </p>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+
 "use client";
-
 import { trpc } from "@/app/_trpc/client";
-import { formatDistanceToNow, isTomorrow, differenceInSeconds } from "date-fns";
-import { Badge } from "./ui/badge";
-import { Clock } from "lucide-react";
-import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
-
-interface CountdownTime {
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+import LoadingSkeleton from "./LoadingSkeleton";
 
 export default function UpcomingLaunches() {
-  const [countdown, setCountdown] = useState<CountdownTime>({ hours: 0, minutes: 0, seconds: 0 });
-  
-  const { data: products } = trpc.product.getUpcoming.useQuery(
-    undefined,
-    {
-      refetchInterval: 30000,
-      refetchOnWindowFocus: true,
-    }
-  );
+ const { data: products, isLoading } = trpc.product.getUpcoming.useQuery(
+   undefined,
+   {
+     refetchInterval: 30000,
+     refetchOnWindowFocus: true,
+   }
+ );
 
-  // Filter for tomorrow's launches
-  const tomorrowLaunches = products?.filter(product => 
-    isTomorrow(new Date(product.launchDate))
-  ).sort((a, b) => 
-    new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime()
-  ) ?? [];
-
-  // Calculate countdown values
-  const calculateTimeLeft = (targetDate: Date): CountdownTime => {
-    const totalSeconds = Math.max(0, differenceInSeconds(targetDate, new Date()));
-    
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    return { hours, minutes, seconds };
-  };
-
-  // Update countdown every second
-  useEffect(() => {
-    if (!tomorrowLaunches.length) return;
-
-    const timer = setInterval(() => {
-      const nextLaunch = new Date(tomorrowLaunches[0].launchDate);
-      setCountdown(calculateTimeLeft(nextLaunch));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [tomorrowLaunches]);
-
-  // Format number to always show two digits
-  const formatNumber = (num: number): string => {
-    return num.toString().padStart(2, '0');
-  };
-
+ // show loading skeleton whicl edata is being fetched. 
+ if(isLoading){
+  return <LoadingSkeleton />
+ }
+  // No more filtering for tomorrow's launches
+ const upcomingLaunches = products?.sort((a, b) => 
+   new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime()
+ ) ?? [];
   return (
-    <div className="py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold">Tomorrow's Launches</h2>
-          {tomorrowLaunches.length > 0 && (
-            <div className="flex items-center gap-4">
-              <Clock className="w-5 h-5 text-blue-600" />
-              <div className="text-2xl font-mono font-bold text-blue-600">
-                {formatNumber(countdown.hours)}:{formatNumber(countdown.minutes)}:{formatNumber(countdown.seconds)}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {tomorrowLaunches.length > 0 ? (
-          <div className="space-y-6">
-            {tomorrowLaunches.map((product) => (
-              <div key={product.id} className="max-w-7xl mx-5">
-                <ProductCard 
-                  product={{
-                    ...product,
-                    createdAt: new Date(product.createdAt),
-                    launchDate: new Date(product.launchDate),
-                    categories: product.categories
-                  }}
-                  variant="upcoming"
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-gray-500">
-            No launches scheduled for tomorrow.
-          </p>
-        )}
-      </div>
-    </div>
-  );
+   <div className="py-12">
+     <div className="max-w-7xl mx-auto px-4">
+       <div className="flex items-center justify-between mb-8">
+         <h2 className="text-3xl font-bold">Upcoming Launches</h2>
+       </div>
+        {upcomingLaunches.length > 0 ? (
+         <div className="space-y-6">
+           {upcomingLaunches.map((product) => (
+             <div key={product.id} className="max-w-7xl mx-5">
+               <ProductCard 
+                 product={{
+                   ...product,
+                   createdAt: new Date(product.createdAt),
+                   launchDate: new Date(product.launchDate),
+                   categories: product.categories
+                 }}
+                 variant="upcoming"
+               />
+             </div>
+           ))}
+         </div>
+       ) : (
+         <p className="text-center text-gray-500">
+           No upcoming launches at the moment.
+         </p>
+       )}
+     </div>
+   </div>
+ );
 }

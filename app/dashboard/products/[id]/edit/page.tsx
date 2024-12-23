@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { trpc } from '@/app/_trpc/client';
 import ProductForm from '@/components/ProductForm';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { TRPCError } from '@trpc/server';
 import { TRPCClientErrorBase } from '@trpc/client';
 import { DefaultErrorShape } from '@trpc/server/unstable-core-do-not-import';
@@ -26,13 +26,22 @@ export default function EditProductPage() {
     const err = error as TRPCClientErrorBase<DefaultErrorShape>;
     switch (err.message) {
       case 'Product not found':
-        toast.error('Product not found');
+        toast({
+          title: 'Product not found',
+          variant: 'destructive',
+        });
         break;
       case 'Not authorized to view this product':
-        toast.error('You are not authorized to view this product');
+        toast({
+          title: 'You are not authorized to view this product',
+          variant: 'destructive',
+        });
         break;
       default:
-        toast.error('An error occurred while loading the product');
+        toast({
+          title: 'An error occurred while loading the product',
+          variant: 'destructive',
+        });
     }
     router.push('/dashboard');
     return null;

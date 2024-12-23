@@ -6,6 +6,7 @@ import { TRPCError } from '@trpc/server';
 
 export const productRouter = router({
 
+  // launch product
     launch: privateProcedure
    .input(z.object({ productId: z.string() }))
    .mutation(async ({ ctx, input }) => {
@@ -19,10 +20,16 @@ export const productRouter = router({
      }
       return db.product.update({
        where: { id: input.productId },
-       data: { isLaunched: true }
+       data: { isLaunched: true },
+       select: {
+         id: true,
+         slug: true,
+         isLaunched: true
+       }
      });
    }),
 
+   // get upcoming products
     getUpcoming: publicProcedure.query(async ({ ctx }) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Set to start of day
@@ -56,6 +63,8 @@ export const productRouter = router({
           }
         });
        }),
+
+       // get yesterday's products
        getYesterday: publicProcedure.query(async ({ ctx }) => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -100,58 +109,8 @@ export const productRouter = router({
           }
         });
       }),
-    //    getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
-    //     const today = new Date();
-    //     today.setHours(0, 0, 0, 0);
-        
-    //     const tomorrow = new Date(today);
-    //     tomorrow.setDate(tomorrow.getDate() + 1);
-    //      return db.product.findMany({
-    //       where: {
-    //         launchDate: {
-    //           gte: today,
-    //           lt: tomorrow
-    //         }
-    //       },
-    //       select: {
-    //         id: true,
-    //         slug: true,
-    //         name: true,
-    //         tagline: true,
-    //         thumbnail: true,
-    //         createdAt: true,
-    //         launchDate: true,
-    //         categories: {
-    //           include: {
-    //             category: {
-    //               select: {
-    //                 id: true,
-    //                 name: true,
-    //               }
-    //             }
-    //           }
-    //         },
-    //         maker: {
-    //           select: {
-    //             name: true,
-    //             avatarUrl: true,
-    //           }
-    //         },
-    //         _count: {
-    //           select: {
-    //             votes: true
-    //           }
-    //         }
-    //       },
-    //       orderBy: {
-    //         votes: {
-    //           _count: 'desc'
-    //         }
-    //       },
-    //       take: 3
-    //     });
-    //   }),
 
+    // get todays winners
     getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -208,6 +167,7 @@ export const productRouter = router({
             pricing: true,
             launchDate: true,
             isLaunched: true,
+            slug: true,
             _count: {
               select: {
                 votes: true,
@@ -314,7 +274,7 @@ export const productRouter = router({
       return product;
     }),
 
-  // Get product details
+  // Get product details by id (edit mode)
   getProductById: privateProcedure
   .input(z.object({ id: z.string() }))
   .query(async ({ ctx, input }) => {
@@ -419,6 +379,7 @@ export const productRouter = router({
       });
     }),
 
+  // update product
   update: privateProcedure
     .input(z.object({
       id: z.string(),
@@ -484,6 +445,65 @@ export const productRouter = router({
             },
           },
         },
+      });
+    }),
+
+    // check for duplicate name or slug of the product
+  checkDuplicate: privateProcedure
+    .input(z.object({
+      name: z.string(),
+      slug: z.string(),
+      excludeId: z.string().optional(), // For edit mode
+    }))
+    .query(async ({ ctx, input }) => {
+      const { name, slug, excludeId } = input;
+      
+      const existingProduct = await db.product.findFirst({
+        where: {
+          OR: [
+            { name: { equals: name, mode: 'insensitive' } },
+            { slug: { equals: slug, mode: 'insensitive' } }
+          ],
+          AND: {
+            makerId: ctx.user.id,
+            // Exclude current product when editing
+            ...(excludeId && { NOT: { id: excludeId } })
+          }
+        },
+      });
+
+      return {
+        exists: !!existingProduct,
+        field: existingProduct?.name === name ? 'name' : 'slug'
+      };
+    }),
+
+  // Add delete product mutation
+  delete: privateProcedure
+    .input(z.object({ 
+      productId: z.string() 
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const product = await db.product.findUnique({
+        where: { id: input.productId }
+      });
+
+      if (!product) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Product not found'
+        });
+      }
+
+      if (product.makerId !== ctx.userId) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Not authorized to delete this product'
+        });
+      }
+
+      return db.product.delete({
+        where: { id: input.productId }
       });
     }),
 }); 
