@@ -10,8 +10,8 @@ import Link from "next/link";
 import TodaysWinners from "@/components/TodaysWinners";
 import YesterdayLaunches from "@/components/YesterdayLaunches";
 import UpcomingLaunches from "@/components/UpcomingLaunches";
-import { Suspense } from 'react';
-import LoadingSkeleton from "@/components/LoadingSkeleton";
+// import { Suspense } from 'react';
+// import LoadingSkeleton from "@/components/LoadingSkeleton";
 
 export default function Home() {
   // Pre-fetch data
@@ -52,23 +52,23 @@ export default function Home() {
       {/* <TrendingProducts /> */}
      {/* <FeaturedCategories /> */}
      <div className="max-w-7xl mx-auto px-4 space-y-16">
-       <Suspense fallback={<LoadingSkeleton />}>
+       {/* <Suspense fallback={<LoadingSkeleton />}> */}
          <section className="bg-white rounded-xl shadow-sm">
            <UpcomingLaunches />
          </section>
-       </Suspense>
+       {/* </Suspense> */}
 
-       <Suspense fallback={<LoadingSkeleton />}>
+       {/* <Suspense fallback={<LoadingSkeleton />}> */}
          <section className="bg-white rounded-xl shadow-sm">
            <TodaysWinners />
          </section>
-       </Suspense>
+       {/* </Suspense> */}
 
-       <Suspense fallback={<LoadingSkeleton />}>
+       {/* <Suspense fallback={<LoadingSkeleton />}> */}
          <section className="bg-white rounded-xl shadow-sm">
            <YesterdayLaunches />
          </section>
-       </Suspense>
+       {/* </Suspense> */}
      </div>
    </>
   );

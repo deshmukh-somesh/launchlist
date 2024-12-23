@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/use-toast';
 
 type FormInputs = {
   name: string;
@@ -36,25 +36,38 @@ export default function NewProductForm() {
   const utils = trpc.useContext();
   const createProduct = trpc.product.create.useMutation({
     onSuccess: async () => {
-      toast.success('Product created successfully!');
+      toast({
+        title: 'Product created successfully!',
+        variant: 'default',
+      });
+      // Invalidate the dashboard products query
+      await utils.product.getDashboardProducts.invalidate();
       router.push('/dashboard');
       router.refresh();
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast({
+        title: 'Error creating product',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
     }
   });
 
   const onSubmit = async (data: FormInputs) => {
     setIsSubmitting(true);
     try {
-      await createProduct.mutate({
+      await createProduct.mutateAsync({
         ...data,
         thumbnail: null,
         categoryIds: [],
         images: [],
         isLaunched: false
       });
+    } catch (error) {
+      // toast.error('Failed to create product');
+      console.error('Error creating product:', error);
     } finally {
       setIsSubmitting(false);
     }

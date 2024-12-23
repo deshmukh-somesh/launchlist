@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,31 @@ import {
   MessageCircle, 
   Rocket,
   FolderHeart,
-  Plus
+  Plus,
+  Trash2,
+  Eye,
+  Loader2
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { format, isPast } from 'date-fns';
-import { toast } from 'sonner';
+import { toast } from './ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Types based on your schema
 type DashboardProduct = {
@@ -24,41 +44,90 @@ type DashboardProduct = {
   tagline: string;
   thumbnail: string | null;
   pricing: 'FREE' | 'PAID' | 'SUBSCRIPTION';
+  slug: string;
+  launchDate: string;
+  isLaunched: boolean;
   _count: {
     votes: number;
     comments: number;
   };
-  isLaunched: boolean;
-  launchDate: string;
 };
 
 export default function DashboardMain() {
   const router = useRouter();
   const utils = trpc.useContext();
-  const { data, isLoading } = trpc.product.getDashboardProducts.useQuery();
+  
+  // Combine the isPending states into one
+  const { data, isPending: isProductsLoading } = trpc.product.getDashboardProducts.useQuery();
+  const [selectedProduct, setSelectedProduct] = useState<DashboardProduct | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const launchProduct = trpc.product.launch.useMutation({
-    onSuccess: async () => {
-      toast.success('Product launched successfully!');
+    onSuccess: async (data) => {
+      toast({
+        title: 'Product launched successfully!',
+        variant: 'default',
+      });
       await Promise.all([
         utils.product.getDashboardProducts.invalidate(),
         utils.product.getUpcoming.invalidate(),
         utils.product.getTodaysWinners.invalidate(),
       ]);
+      // Redirect to the public product page after launch
+      router.push(`/products/${data.slug}`);
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast({
+        title: 'Error launching product',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   });
 
+   // Add the delete mutation
+   const deleteProduct = trpc.product.delete.useMutation({
+    onSuccess: async () => {
+      toast({
+        title: 'Product deleted successfully!',
+        variant: 'default',
+      });
+      await utils.product.getDashboardProducts.invalidate();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error deleting product',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Add the handleDelete function
+  const handleDelete = (productId: string) => {
+    deleteProduct.mutate({ productId });
+  };
+
   const handleNewProduct = () => {
     router.push('/dashboard/products/new');
+  };
+
+  // Rename the second isPending to avoid conflict
+  const { data: productDetails, isPending: isDetailsLoading } = trpc.product.getProductById.useQuery(
+    { id: selectedProduct?.id ?? '' },
+    { enabled: !!selectedProduct }
+  );
+
+  // Prefetch product details when hovering over the View Form button
+  const prefetchProduct = (productId: string) => {
+    utils.product.getProductById.prefetch({ id: productId });
   };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Stats Overview */}
       <div className="grid gap-6 mb-8 md:grid-cols-3">
+        
         <Card>
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
@@ -117,7 +186,7 @@ export default function DashboardMain() {
 
             {/* Products List */}
             <div className="grid gap-4">
-              {isLoading ? (
+              {isProductsLoading ? (
                 // Loading skeleton
                 Array(3).fill(0).map((_, i) => (
                   <Card key={i}>
@@ -175,7 +244,7 @@ export default function DashboardMain() {
                           </div>
 
                           <div className="flex gap-2 mt-4">
-                            {!product.isLaunched && (
+                            {!product.isLaunched ? (
                               <>
                                 <Link href={`/dashboard/products/${product.id}/edit`}>
                                   <Button variant="outline">
@@ -188,13 +257,59 @@ export default function DashboardMain() {
                                 >
                                   Launch Product
                                 </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="destructive"
+                                      size="icon"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your
+                                        product and remove it from our servers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete(product.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </>
-                            )}
-                            {product.isLaunched && (
-                              <span className="text-sm text-green-600 flex items-center gap-1">
-                                <Rocket className="h-4 w-4" />
-                                Launched
-                              </span>
+                            ) : (
+                              <div className="flex gap-2 items-center">
+                                <Button 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedProduct(product);
+                                    setIsViewModalOpen(true);
+                                  }}
+                                  onMouseEnter={() => prefetchProduct(product.id)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Form
+                                </Button>
+                                <Link href={`/products/${product.slug}`}>
+                                  <Button variant="default">
+                                    <Rocket className="h-4 w-4 mr-2" />
+                                    View Live
+                                  </Button>
+                                </Link>
+                                <span className="text-sm text-green-600 flex items-center gap-1">
+                                  <Rocket className="h-4 w-4" />
+                                  Launched
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -233,6 +348,68 @@ export default function DashboardMain() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Add the Dialog for viewing product details */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-2xl min-h-[400px]">
+          <DialogHeader>
+            <DialogTitle>Product Details</DialogTitle>
+          </DialogHeader>
+          
+          {isDetailsLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            </div>
+          ) : productDetails ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <div className="mt-1 p-2 bg-gray-50 rounded-md">
+                  {productDetails.name}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tagline</label>
+                <div className="mt-1 p-2 bg-gray-50 rounded-md">
+                  {productDetails.tagline}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <div className="mt-1 p-2 bg-gray-50 rounded-md whitespace-pre-wrap">
+                  {productDetails.description}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Website</label>
+                <div className="mt-1 p-2 bg-gray-50 rounded-md">
+                  <a href={productDetails.website} target="_blank" rel="noopener noreferrer" 
+                     className="text-blue-600 hover:underline">
+                    {productDetails.website}
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Pricing</label>
+                <div className="mt-1 p-2 bg-gray-50 rounded-md">
+                  {productDetails.pricing}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Launch Date</label>
+                <div className="mt-1 p-2 bg-gray-50 rounded-md">
+                  {format(new Date(productDetails.launchDate), 'PPP')}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

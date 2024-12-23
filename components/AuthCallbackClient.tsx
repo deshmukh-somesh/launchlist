@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 export default function AuthCallbackClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const origin = searchParams.get('origin');
+  const origin = searchParams?.get('origin');
 
   const { data, error, isSuccess } = trpc.authCallback.useQuery(undefined, {
     retry: true,
