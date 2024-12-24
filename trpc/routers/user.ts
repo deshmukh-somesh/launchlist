@@ -65,4 +65,38 @@ export const userRouter = router({
         },
       });
     }),
+
+  // Get platform statistics
+  getPlatformStats: publicProcedure
+    .query(async () => {
+      const [
+        totalProducts,
+        totalUsers,
+        totalLaunches24h
+      ] = await Promise.all([
+        // Get total products
+        db.product.count({
+          where: {
+            isLaunched: true
+          }
+        }),
+        // Get total users
+        db.user.count(),
+        // Get launches in last 24 hours
+        db.product.count({
+          where: {
+            isLaunched: true,
+            launchDate: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+            }
+          }
+        })
+      ]);
+
+      return {
+        totalProducts,
+        totalUsers,
+        totalLaunches24h
+      };
+    }),
 });

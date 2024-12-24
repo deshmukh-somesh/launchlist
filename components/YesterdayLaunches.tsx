@@ -14,6 +14,7 @@ interface Product {
   createdAt: string;
   launchDate: string;
   website: string;
+  isLaunched: boolean;
   categories: {
     category: {
       id: string;
@@ -54,7 +55,8 @@ export default function YesterdayLaunches() {
                ...product,
                createdAt: new Date(product.createdAt),
                launchDate: new Date(product.launchDate),
-               categories: product.categories
+               categories: product.categories,
+               isLaunched: product.isLaunched
              }}
              variant="yesterday"
            />
