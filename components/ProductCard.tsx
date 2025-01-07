@@ -4,6 +4,8 @@ import { Badge } from "./ui/badge";
 import { formatDistance, isFuture, isPast, isToday } from "date-fns";
 import { Clock, ExternalLink, Trophy, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
+import { trpc } from "@/app/_trpc/client";
+import { useState } from "react";
 
 interface ProductCardProps {
     product: {
@@ -35,6 +37,39 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, variant = 'default' }: ProductCardProps) {
+    const utils = trpc.useContext();
+    const [optimisticVotes, setOptimisticVotes] = useState(product._count?.votes || 0);
+    const [isVoting, setIsVoting] = useState(false);
+
+    const toggleVote = trpc.product.toggleVote.useMutation({
+        onMutate: async () => {
+            // Optimistically update the vote count
+            setIsVoting(true);
+            setOptimisticVotes(prev => prev + 1);
+        },
+        onSuccess: async () => {
+            // Invalidate related queries to refetch latest data
+            await Promise.all([
+                utils.product.getUpcoming.invalidate(),
+                utils.product.getTodaysWinners.invalidate(),
+                utils.product.getYesterday.invalidate(),
+            ]);
+        },
+        onError: () => {
+            // Revert optimistic update on error
+            setOptimisticVotes(product._count?.votes || 0);
+        },
+        onSettled: () => {
+            setIsVoting(false);
+        }
+    });
+
+    const handleVoteClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleVote.mutate({ productId: product.id });
+    };
+
     const isUpcoming = isFuture(product.launchDate);
     // const isLaunchedToday = isToday(product.launchDate);
     // const timeUntilLaunch = isUpcoming ? formatDistance(product.launchDate, new Date()) : null;
@@ -101,11 +136,15 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
                         {product._count?.votes || 0}
                     </div> */}
                     <div className="flex items-center justify-center flex-col gap-1">
+                        <button 
+                            onClick={handleVoteClick}
+                            disabled={isVoting}
+                            className="flex items-center justify-center hover:scale-110 transition-transform disabled:opacity-50"
+                        >
+                            <Heart className={`w-5 h-5 ${optimisticVotes > (product._count?.votes || 0) ? 'fill-red-500' : ''} text-red-500`} />
+                        </button>
                         <div>
-                            <Heart className="w-5 h-5 text-red-500" />
-                        </div>
-                        <div>
-                            {product._count?.votes || 0}
+                            {optimisticVotes}
                         </div>
                     </div>
 
