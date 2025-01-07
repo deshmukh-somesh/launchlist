@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { formatDistance, isFuture, isPast, isToday } from "date-fns";
-import { Clock, ExternalLink, Trophy } from "lucide-react";
+import { Clock, ExternalLink, Trophy, Heart, MessageCircle } from "lucide-react";
+import Image from "next/image";
 
 interface ProductCardProps {
     product: {
@@ -27,6 +28,7 @@ interface ProductCardProps {
         };
         _count?: {
             votes: number;
+            comments: number;
         };
     };
     variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
@@ -34,8 +36,8 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, variant = 'default' }: ProductCardProps) {
     const isUpcoming = isFuture(product.launchDate);
-    const isLaunchedToday = isToday(product.launchDate);
-    const timeUntilLaunch = isUpcoming ? formatDistance(product.launchDate, new Date()) : null;
+    // const isLaunchedToday = isToday(product.launchDate);
+    // const timeUntilLaunch = isUpcoming ? formatDistance(product.launchDate, new Date()) : null;
 
     return (
         <div className="flex items-center space-x-6 p-6 hover:bg-gray-50 rounded-lg transition-colors w-full max-w-6xl mx-auto border border-gray-200">
@@ -54,15 +56,15 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
 
             {/* Middle - Product Info */}
             <div className="flex-grow min-w-0 px-4">
-                <div className="flex items-center space-x-2">
-                    <Link 
+                <div className="flex items-center justify-between space-x-2">
+                    <Link
                         href={`/products/${product.slug}`}
                         className="text-2xl font-semibold hover:text-blue-600 transition-colors truncate"
                     >
                         {product.name}
                     </Link>
                     {/* Updated external link handling */}
-                    <div 
+                    {/* <div 
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -71,11 +73,11 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
                         className="cursor-pointer text-gray-500 hover:text-blue-600 transition-colors flex-shrink-0"
                     >
                         <ExternalLink className="w-5 h-5" />
-                    </div>
+                    </div> */}
                 </div>
-                
+
                 <p className="text-gray-600 mt-2 text-lg">{product.tagline}</p>
-                
+
                 {/* Categories */}
                 <div className="flex flex-wrap gap-2 mt-3">
                     {product.categories.map((cat) => (
@@ -93,25 +95,57 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
             {/* Right side - Metadata */}
             <div className="flex flex-col items-end gap-2">
                 <div className="mt-2 flex items-center gap-2">
-                    <span className="text-sm text-gray-500">
-                        ❤️ {product._count?.votes || 0}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                        💬 0
-                    </span>
+                    {/* <span className="text-sm text-gray-500"> */}
+                    {/* <div className="flex items-center gap-1">
+                        <Heart className="w-5 h-5 text-red-500" /> 
+                        {product._count?.votes || 0}
+                    </div> */}
+                    <div className="flex items-center justify-center flex-col gap-1">
+                        <div>
+                            <Heart className="w-5 h-5 text-red-500" />
+                        </div>
+                        <div>
+                            {product._count?.votes || 0}
+                        </div>
+                    </div>
+
+                    {/* </span> */}
+                    {/* <span className="text-sm text-gray-500"> */}
+                    <div className="flex items-center justify-center flex-col gap-1">
+                        <div>
+                            <MessageCircle className="w-5 h-5 text-gray-500" />
+                        </div>
+                        <div>
+                            {product._count?.comments || 0}
+                        </div>
+                    </div>
+                    {/* </span> */}
+                    <div
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(product.website, '_blank', 'noopener,noreferrer');
+                        }}
+                        className="cursor-pointer text-gray-500 hover:text-blue-600 transition-colors flex-shrink-0 mb-6"
+                    >
+                        <ExternalLink className="w-5 h-5" />
+                    </div>
                 </div>
 
                 <div className="mt-4 flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
                         {product.maker.avatarUrl && (
                             <img
+                                // width={24}
+                                // height={24}
+                                // quality={100}
                                 src={product.maker.avatarUrl}
                                 alt={product.maker.name || ''}
                                 className="w-full h-full object-cover"
                             />
                         )}
                     </div>
-                    <span className="text-sm text-gray-600">{product.maker.name}</span>
+                    <span className="text-sm text-gray-600">{product.maker.name || ''}</span>
                 </div>
             </div>
         </div>
