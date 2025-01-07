@@ -29,7 +29,7 @@ export default function YesterdayWinners() {
         
         {products && products.length > 0 ? (
           <div className="space-y-6">
-            {products.map((product: Product) => (
+            {products.map((product: Product, index) => (
               <div key={product.id} className="w-full">
                 <ProductCard 
                   key={product.id} 
@@ -39,9 +39,14 @@ export default function YesterdayWinners() {
                     launchDate: new Date(product.launchDate),
                     categories: product.categories,
                     website: product.website,
-                    isLaunched: product.isLaunched
+                    isLaunched: product.isLaunched,
+                    _count: {
+                      votes: product._count?.votes || 0,
+                      comments: product._count?.comments || 0,
+                    }
                   }}
                   variant="winner"
+                  rank={index + 1} // Add rank for winner badges (1, 2, or 3)
                 />
               </div>
             ))}
@@ -54,4 +59,4 @@ export default function YesterdayWinners() {
       </div>
     </div>
   );
-} 
+}

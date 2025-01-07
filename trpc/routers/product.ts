@@ -4,6 +4,10 @@ import { z } from 'zod';
 import { isPast } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { addDays, startOfDay, endOfDay } from 'date-fns';
+import { observable } from '@trpc/server/observable';
+import { EventEmitter } from 'events';
+
+const voteEvents = new EventEmitter();
 
 export const productRouter = router({
 
@@ -149,7 +153,8 @@ export const productRouter = router({
         },
         _count: {
           select: {
-            votes: true
+            votes: true,
+            comments: true
           }
         }
       }
@@ -325,6 +330,14 @@ export const productRouter = router({
   toggleVote: privateProcedure
     .input(z.object({ productId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      // Ensure user is authenticated
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Must be logged in to vote',
+        });
+      }
+
       const existingVote = await db.vote.findUnique({
         where: {
           userId_productId: {
@@ -334,9 +347,10 @@ export const productRouter = router({
         },
       });
 
+      // Handle vote toggle
       if (existingVote) {
-        // If vote exists, remove it (unlike)
-        return db.vote.delete({
+        // Remove vote
+        await db.vote.delete({
           where: {
             userId_productId: {
               userId: ctx.userId,
@@ -344,15 +358,26 @@ export const productRouter = router({
             },
           },
         });
+      } else {
+        // Add vote
+        await db.vote.create({
+          data: {
+            userId: ctx.userId,
+            productId: input.productId,
+          },
+        });
       }
 
-      // If no vote exists, create one (like)
-      return db.vote.create({
-        data: {
-          userId: ctx.userId,
-          productId: input.productId,
-        },
+      // Get updated vote count
+      const newCount = await db.vote.count({
+        where: { productId: input.productId }
       });
+      
+      // Emit the vote event with new count
+      voteEvents.emit('vote', input.productId, newCount);
+      
+      // Return the new count
+      return { count: newCount };
     }),
 
   // Add this new procedure for image uploads
@@ -546,7 +571,8 @@ export const productRouter = router({
         },
         _count: {
           select: {
-            votes: true
+            votes: true,
+            comments: true
           }
         }
       }
@@ -628,4 +654,35 @@ export const productRouter = router({
 
     return nextLaunch;
   }),
+
+  // Get current vote count
+  getVoteCount: publicProcedure
+    .input(z.object({ productId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const count = await db.vote.count({
+        where: { productId: input.productId }
+      });
+      return count;
+    }),
+
+  // Subscribe to vote updates
+  onVoteUpdate: publicProcedure
+    .input(z.object({ productId: z.string() }))
+    .subscription(({ input }) => {
+      return observable((emit) => {
+        const onVote = (productId: string, count: number) => {
+          if (productId === input.productId) {
+            emit.next(count);
+          }
+        };
+
+        voteEvents.on('vote', onVote);
+
+        return () => {
+          voteEvents.off('vote', onVote);
+        };
+      });
+    }),
+
+  // Update your toggleVote mutation to emit events
 }); 

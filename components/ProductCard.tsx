@@ -5,7 +5,11 @@ import { formatDistance, isFuture, isPast, isToday } from "date-fns";
 import { Clock, ExternalLink, Trophy, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { trpc } from "@/app/_trpc/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+import { toast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
+import { useKindeBrowserClient, LoginLink } from "@kinde-oss/kinde-auth-nextjs";
 
 interface ProductCardProps {
     product: {
@@ -34,39 +38,75 @@ interface ProductCardProps {
         };
     };
     variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
+    rank?: number;
 }
 
-export default function ProductCard({ product, variant = 'default' }: ProductCardProps) {
+// Create a vote queue to handle background processing
+const voteQueue = new Set<string>();
+let isProcessingQueue = false;
+
+export default function ProductCard({ product, variant = 'default', rank }: ProductCardProps) {
     const utils = trpc.useContext();
     const [optimisticVotes, setOptimisticVotes] = useState(product._count?.votes || 0);
-    const [isVoting, setIsVoting] = useState(false);
+    const [hasVoted, setHasVoted] = useState(false);
+    const { isAuthenticated } = useKindeBrowserClient();
+    const router = useRouter();
 
     const toggleVote = trpc.product.toggleVote.useMutation({
         onMutate: async () => {
-            // Optimistically update the vote count
-            setIsVoting(true);
-            setOptimisticVotes(prev => prev + 1);
+            if (!isAuthenticated) {
+                toast({
+                    title: "Login Required",
+                    description: "Please login to vote",
+                    variant: "destructive"
+                });
+                return;
+            }
+
+            setOptimisticVotes(prev => hasVoted ? prev - 1 : prev + 1);
+            setHasVoted(prev => !prev);
         },
-        onSuccess: async () => {
-            // Invalidate related queries to refetch latest data
-            await Promise.all([
-                utils.product.getUpcoming.invalidate(),
-                utils.product.getTodaysWinners.invalidate(),
-                utils.product.getYesterday.invalidate(),
-            ]);
+        onError: (error) => {
+            setOptimisticVotes(prev => hasVoted ? prev + 1 : prev - 1);
+            setHasVoted(prev => !prev);
+            
+            toast({
+                title: "Error",
+                description: error.message || "Failed to vote",
+                variant: "destructive"
+            });
         },
-        onError: () => {
-            // Revert optimistic update on error
-            setOptimisticVotes(product._count?.votes || 0);
-        },
-        onSettled: () => {
-            setIsVoting(false);
+        onSuccess: () => {
+            utils.product.getVoteCount.invalidate({ productId: product.id });
         }
     });
+
+    // Periodically refresh vote count
+    useEffect(() => {
+        const interval = setInterval(() => {
+            utils.product.getVoteCount.fetch({ productId: product.id })
+                .then(count => {
+                    if (count !== optimisticVotes) {
+                        setOptimisticVotes(count);
+                    }
+                });
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [product.id]);
 
     const handleVoteClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        
+        if (!isAuthenticated) {
+            const loginLink = document.querySelector('[data-kinde-login-link]') as HTMLElement;
+            if (loginLink) {
+                loginLink.click();
+            }
+            return;
+        }
+        
         toggleVote.mutate({ productId: product.id });
     };
 
@@ -74,8 +114,25 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
     // const isLaunchedToday = isToday(product.launchDate);
     // const timeUntilLaunch = isUpcoming ? formatDistance(product.launchDate, new Date()) : null;
 
+    const getWinnerBadge = () => {
+        if (variant !== 'winner' || !rank) return null;
+        
+        const badges = {
+            1: '🥇 1st Place',
+            2: '🥈 2nd Place',
+            3: '🥉 3rd Place'
+        };
+
+        return (
+            <div className="absolute -top-3 -right-3 bg-yellow-400 text-white px-3 py-1 rounded-full shadow-lg transform rotate-12">
+                {badges[rank as 1 | 2 | 3]}
+            </div>
+        );
+    };
+
     return (
-        <div className="flex items-center space-x-6 p-6 hover:bg-gray-50 rounded-lg transition-colors w-full max-w-6xl mx-auto border border-gray-200">
+        <div className="relative flex items-center space-x-6 p-6 hover:bg-gray-50 rounded-lg transition-colors w-full max-w-6xl mx-auto border border-gray-200">
+            {getWinnerBadge()}
             {/* Left side - Thumbnail */}
             <div className="flex-shrink-0 w-32 h-32">
                 {product.thumbnail ? (
@@ -136,16 +193,24 @@ export default function ProductCard({ product, variant = 'default' }: ProductCar
                         {product._count?.votes || 0}
                     </div> */}
                     <div className="flex items-center justify-center flex-col gap-1">
-                        <button 
-                            onClick={handleVoteClick}
-                            disabled={isVoting}
-                            className="flex items-center justify-center hover:scale-110 transition-transform disabled:opacity-50"
-                        >
-                            <Heart className={`w-5 h-5 ${optimisticVotes > (product._count?.votes || 0) ? 'fill-red-500' : ''} text-red-500`} />
-                        </button>
-                        <div>
-                            {optimisticVotes}
-                        </div>
+                        {isAuthenticated ? (
+                            <button 
+                                onClick={handleVoteClick}
+                                className="flex items-center justify-center flex-col hover:scale-110 transition-transform"
+                            >
+                                <Heart 
+                                    className={`w-5 h-5 ${hasVoted ? 'fill-red-500' : ''} text-red-500`} 
+                                />
+                                <span className="ml-1">{optimisticVotes}</span>
+                            </button>
+                        ) : (
+                            <LoginLink 
+                                className="flex items-center justify-center flex-col hover:scale-110 transition-transform cursor-pointer"
+                            >
+                                <Heart className="w-5 h-5 text-red-500" />
+                                <span className="ml-1">{optimisticVotes}</span>
+                            </LoginLink>
+                        )}
                     </div>
 
                     {/* </span> */}
