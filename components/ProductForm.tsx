@@ -5,6 +5,7 @@ import { useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
+import { ThumbnailUploader } from "./ThumbnailUploader";
 
 
 export type ProductFormInputs = {
@@ -16,6 +17,7 @@ export type ProductFormInputs = {
   pricing: 'FREE' | 'PAID' | 'SUBSCRIPTION';
   launchDate: string;
   isLaunched: boolean;
+  thumbnail: string | null;
 };
 
 interface ProductFormProps {
@@ -28,31 +30,52 @@ interface ProductFormProps {
 export default function ProductForm({ initialData, productId, isEditing = false, readonly = false }: ProductFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Get tomorrow's date for minimum launch date
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
-  
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<ProductFormInputs>({
+
+  // const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<ProductFormInputs>({
+  //   defaultValues: initialData || {
+  //     pricing: 'FREE',
+  //     launchDate: minDate,
+  //     thumbnail: null
+  //   }
+  // });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue
+  } = useForm<ProductFormInputs, any>({
     defaultValues: initialData || {
       pricing: 'FREE',
-      launchDate: minDate
+      launchDate: minDate,
+      thumbnail: null,
+      name: '',
+      slug: '',
+      tagline: '',
+      description: '',
+      website: '',
+      isLaunched: false
     }
   });
 
   // Watch name and slug fields for changes
   const name = watch('name');
   const slug = watch('slug');
-
+  const thumbnail = watch('thumbnail');
   // Check for duplicates
   const { data: duplicateCheck } = trpc.product.checkDuplicate.useQuery(
-    { 
-      name, 
+    {
+      name,
       slug,
-      excludeId: isEditing ? productId : undefined 
+      excludeId: isEditing ? productId : undefined
     },
-    { 
+    {
       enabled: !!(name && slug), // Only run query when both fields have values
       refetchOnWindowFocus: false
     }
@@ -75,7 +98,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
   };
 
   const utils = trpc.useContext();
-  
+
 
   const updateProduct = trpc.product.update.useMutation({
     onSuccess: async () => {
@@ -83,11 +106,11 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         title: 'Product updated successfully!',
         variant: 'default',
       });
-    //   Invalidate both queries
-    await Promise.all([
+      //   Invalidate both queries
+      await Promise.all([
         utils.product.getDashboardProducts.invalidate(),
-        utils.product.getProductById.invalidate({id:productId as string})
-    ])
+        utils.product.getProductById.invalidate({ id: productId as string })
+      ])
       router.push('/dashboard');
       router.refresh();
     },
@@ -107,7 +130,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         title: 'Product created successfully!',
         variant: 'default',
       });
-    //   Invalidate the dashboard products query
+      //   Invalidate the dashboard products query
       await utils.product.getDashboardProducts.invalidate();
       router.push('/dashboard');
       router.refresh();
@@ -130,21 +153,18 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         await updateProduct.mutateAsync({
           id: productId,
           ...data,
-          thumbnail: null,
           categoryIds: [],
           images: []
         });
       } else {
         await createProduct.mutateAsync({
           ...data,
-          thumbnail: null,
           categoryIds: [],
           images: [],
           isLaunched: false
         });
       }
     } catch (error) {
-    //   toast.error('Failed to create product');
       console.error('Error creating product:', error);
     }
   };
@@ -155,10 +175,21 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         {readonly ? 'View Product' : isEditing ? 'Edit Product' : 'Add New Product'}
       </h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
+          <label className="block font-medium">Product Thumbnail</label>
+          <ThumbnailUploader
+            value={thumbnail}
+            onChange={(url) => setValue('thumbnail', url)}
+            disabled={readonly}
+          />
+          {errors.thumbnail && (
+            <p className="text-red-500 text-sm mt-1">{errors.thumbnail.message}</p>
+          )}
+        </div>
         <div>
           <label className="block mb-1">Name</label>
           <input
-            {...register("name", { 
+            {...register("name", {
               required: "Name is required",
               validate: validateName
             })}
@@ -173,7 +204,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         <div>
           <label className="block mb-1">Slug</label>
           <input
-            {...register("slug", { 
+            {...register("slug", {
               required: "Slug is required",
               validate: validateSlug
             })}
@@ -231,18 +262,18 @@ export default function ProductForm({ initialData, productId, isEditing = false,
           <label className="block mb-1">Launch Date</label>
           <input
             type="date"
-            {...register("launchDate", { 
+            {...register("launchDate", {
               required: "Launch date is required",
               validate: (value) => {
                 const selectedDate = new Date(value);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+
                 // Check if selected date is at least tomorrow
                 const tomorrow = new Date(today);
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                
-                return selectedDate >= tomorrow || 
+
+                return selectedDate >= tomorrow ||
                   "Launch date must be at least tomorrow";
               }
             })}
