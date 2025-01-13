@@ -9,6 +9,24 @@ import { EventEmitter } from 'events';
 
 const voteEvents = new EventEmitter();
 
+const enrichProductWithVoteStatus = async (product: any, userId: string | null) => {
+  if (!userId) return { ...product, hasVoted: false };
+
+  const vote = await db.vote.findUnique({
+    where: {
+      userId_productId: {
+        userId,
+        productId: product.id,
+      },
+    },
+  });
+
+  return {
+    ...product,
+    hasVoted: !!vote,
+  };
+};
+
 export const productRouter = router({
 
   // launch product
@@ -38,7 +56,7 @@ export const productRouter = router({
   getUpcoming: publicProcedure.query(async ({ ctx }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to start of day
-    return db.product.findMany({
+    const products = await db.product.findMany({
       where: {
         launchDate: {
           gt: today // Get products with launch dates after today
@@ -68,6 +86,11 @@ export const productRouter = router({
         }
       }
     });
+
+    // Enrich with vote status
+    return Promise.all(
+      products.map(product => enrichProductWithVoteStatus(product, ctx.userId))
+    );
   }),
 
   // get yesterday's products
@@ -542,7 +565,7 @@ export const productRouter = router({
     const yesterday = startOfDay(addDays(new Date(), -1));
     const today = startOfDay(new Date());
 
-    return db.product.findMany({
+    const products = await db.product.findMany({
       where: {
         launchDate: {
           gte: yesterday,
@@ -555,7 +578,7 @@ export const productRouter = router({
           _count: 'desc'
         }
       },
-      take: 3, // Get top 3
+      take: 3,
       include: {
         categories: {
           include: {
@@ -576,6 +599,11 @@ export const productRouter = router({
         }
       }
     });
+
+    // Enrich with vote status
+    return Promise.all(
+      products.map(product => enrichProductWithVoteStatus(product, ctx.userId))
+    );
   }),
 
   // Get past launches (paginated)
@@ -620,14 +648,19 @@ export const productRouter = router({
         }
       });
 
+      // Enrich items with vote status
+      const enrichedItems = await Promise.all(
+        items.map(product => enrichProductWithVoteStatus(product, ctx.userId))
+      );
+
       let nextCursor: typeof input.cursor | undefined = undefined;
-      if (items.length > input.limit) {
-        const nextItem = items.pop();
+      if (enrichedItems.length > input.limit) {
+        const nextItem = enrichedItems.pop();
         nextCursor = nextItem!.id;
       }
 
       return {
-        items,
+        items: enrichedItems,
         nextCursor,
       };
     }),
