@@ -36,6 +36,7 @@ interface ProductCardProps {
             votes: number;
             comments: number;
         };
+        hasVoted?: boolean;
     };
     variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
     rank?: number;
@@ -48,27 +49,34 @@ let isProcessingQueue = false;
 export default function ProductCard({ product, variant = 'default', rank }: ProductCardProps) {
     const utils = trpc.useContext();
     const [optimisticVotes, setOptimisticVotes] = useState(product._count?.votes || 0);
-    const [hasVoted, setHasVoted] = useState(false);
+    const [hasVoted, setHasVoted] = useState(product.hasVoted || false);
     const { isAuthenticated } = useKindeBrowserClient();
     const router = useRouter();
 
     const toggleVote = trpc.product.toggleVote.useMutation({
         onMutate: async () => {
+            // Don't perform optimistic update if not authenticated
             if (!isAuthenticated) {
-                toast({
-                    title: "Login Required",
-                    description: "Please login to vote",
-                    variant: "destructive"
-                });
                 return;
             }
 
-            setOptimisticVotes(prev => hasVoted ? prev - 1 : prev + 1);
-            setHasVoted(prev => !prev);
+            // Store previous values
+            const previousVotes = optimisticVotes;
+            const previousVoteStatus = hasVoted;
+
+            // Perform optimistic update
+            setOptimisticVotes(current => hasVoted ? current - 1 : current + 1);
+            setHasVoted(current => !current);
+
+            // Return previous values for rollback
+            return { previousVotes, previousVoteStatus };
         },
-        onError: (error) => {
-            setOptimisticVotes(prev => hasVoted ? prev + 1 : prev - 1);
-            setHasVoted(prev => !prev);
+        onError: (error, variables, context) => {
+            // Rollback on error
+            if (context) {
+                setOptimisticVotes(context.previousVotes);
+                setHasVoted(context.previousVoteStatus);
+            }
             
             toast({
                 title: "Error",
@@ -76,7 +84,12 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
                 variant: "destructive"
             });
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            // Update with actual server data
+            setOptimisticVotes(data.count);
+            setHasVoted(data.hasVoted);
+            
+            // Invalidate relevant queries
             utils.product.getVoteCount.invalidate({ productId: product.id });
         }
     });
@@ -196,7 +209,9 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
                         {isAuthenticated ? (
                             <button 
                                 onClick={handleVoteClick}
-                                className="flex items-center justify-center flex-col hover:scale-110 transition-transform"
+                                disabled={toggleVote.isPending}
+                                className={`flex items-center justify-center flex-col hover:scale-110 transition-transform 
+                                    ${toggleVote.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 <Heart 
                                     className={`w-5 h-5 ${hasVoted ? 'fill-red-500' : ''} text-red-500`} 

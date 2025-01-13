@@ -330,7 +330,6 @@ export const productRouter = router({
   toggleVote: privateProcedure
     .input(z.object({ productId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Ensure user is authenticated
       if (!ctx.userId) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',
@@ -372,12 +371,12 @@ export const productRouter = router({
       const newCount = await db.vote.count({
         where: { productId: input.productId }
       });
-      
-      // Emit the vote event with new count
-      voteEvents.emit('vote', input.productId, newCount);
-      
-      // Return the new count
-      return { count: newCount };
+
+      // Return both the count and the new vote status
+      return {
+        count: newCount,
+        hasVoted: !existingVote
+      };
     }),
 
   // Add this new procedure for image uploads
