@@ -4,155 +4,163 @@ import { z } from 'zod';
 import { isPast } from 'date-fns';
 import { TRPCError } from '@trpc/server';
 import { addDays, startOfDay, endOfDay } from 'date-fns';
+import { observable } from '@trpc/server/observable';
+import { EventEmitter } from 'events';
+
+const voteEvents = new EventEmitter();
 
 export const productRouter = router({
 
   // launch product
-    launch: privateProcedure
-   .input(z.object({ productId: z.string() }))
-   .mutation(async ({ ctx, input }) => {
-     const product = await db.product.findUnique({
-       where: { id: input.productId }
-     });
+  launch: privateProcedure
+    .input(z.object({ productId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const product = await db.product.findUnique({
+        where: { id: input.productId }
+      });
       if (!product) throw new Error('Product not found');
-     if (product.isLaunched) throw new Error('Product already launched');
-     if (isPast(product.launchDate)) {
-       throw new Error('Launch date has passed');
-     }
+      if (product.isLaunched) throw new Error('Product already launched');
+      if (isPast(product.launchDate)) {
+        throw new Error('Launch date has passed');
+      }
       return db.product.update({
-       where: { id: input.productId },
-       data: { isLaunched: true },
-       select: {
-         id: true,
-         slug: true,
-         isLaunched: true
-       }
-     });
-   }),
+        where: { id: input.productId },
+        data: { isLaunched: true },
+        select: {
+          id: true,
+          slug: true,
+          isLaunched: true
+        }
+      });
+    }),
 
-   // get upcoming products
-    getUpcoming: publicProcedure.query(async ({ ctx }) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to start of day
-         return db.product.findMany({
-          where: {
-            launchDate: {
-              gt: today // Get products with launch dates after today
-            },
-            isLaunched: true
-          },
-          orderBy: {
-            launchDate: 'asc'
-          },
+  // get upcoming products
+  getUpcoming: publicProcedure.query(async ({ ctx }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day
+    return db.product.findMany({
+      where: {
+        launchDate: {
+          gt: today // Get products with launch dates after today
+        },
+        isLaunched: true
+      },
+      orderBy: {
+        launchDate: 'asc'
+      },
+      include: {
+        categories: {
           include: {
-            categories: {
-              include: {
-                category: true
-              }
-            },
-            maker: {
+            category: true
+          }
+        },
+        maker: {
+          select: {
+            name: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      }
+    });
+  }),
+
+  // get yesterday's products
+  getYesterday: publicProcedure.query(async ({ ctx }) => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return db.product.findMany({
+      where: {
+        launchDate: {
+          gte: yesterday,
+          lt: today
+        }
+      },
+      include: {
+        categories: {
+          include: {
+            category: {
               select: {
+                id: true,
                 name: true,
-                avatarUrl: true
-              }
-            },
-            _count: {
-              select: {
-                votes: true
               }
             }
           }
-        });
-       }),
-
-       // get yesterday's products
-       getYesterday: publicProcedure.query(async ({ ctx }) => {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-         return db.product.findMany({
-          where: {
-            launchDate: {
-              gte: yesterday,
-              lt: today
-            }
-          },
-          include: {
-            categories: {
-              include: {
-                category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  }
-                }
-              }
-            },
-            maker: {
-              select: {
-                name: true,
-                avatarUrl: true,
-              }
-            },
-            _count: {
-              select: {
-                votes: true
-              }
-            }
-          },
-          orderBy: {
-            votes: {
-              _count: 'desc'
-            }
+        },
+        maker: {
+          select: {
+            name: true,
+            avatarUrl: true,
           }
-        });
-      }),
-
-    // get todays winners
-    getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-         // Get products launched today with most votes
-        const winners = await db.product.findMany({
-          where: {
-            launchDate: {
-              gte: today,
-              lt: tomorrow
-            }
-          },
-          orderBy: {
-            votes: {
-              _count: 'desc' // Order by vote count descending
-            }
-          },
-          take: 3, // Get top 3 winners
-          include: {
-            categories: {
-              include: {
-                category: true
-              }
-            },
-            maker: {
-              select: {
-                name: true,
-                avatarUrl: true
-              }
-            },
-            _count: {
-              select: {
-                votes: true
-              }
-            }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
           }
-        });
-         return winners;
-       }),
+        }
+      },
+      orderBy: {
+        votes: {
+          _count: 'desc'
+
+        }
+      }
+    });
+  }),
+
+  // get todays winners
+  getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Get products launched today with most votes
+    const winners = await db.product.findMany({
+      where: {
+        launchDate: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
+      orderBy: {
+        votes: {
+          _count: 'desc' // Order by vote count descending
+        }
+      },
+      take: 3, // Get top 3 winners
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        },
+        maker: {
+          select: {
+            name: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      }
+    });
+    return winners;
+  }),
   // Add this new procedure
   getDashboardProducts: privateProcedure
     .query(async ({ ctx }) => {
@@ -277,51 +285,58 @@ export const productRouter = router({
 
   // Get product details by id (edit mode)
   getProductById: privateProcedure
-  .input(z.object({ id: z.string() }))
-  .query(async ({ ctx, input }) => {
-    const product = await db.product.findUnique({
-      where: { id: input.id },
-      include: {
-        categories: {
-          include: {
-            category: true,
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const product = await db.product.findUnique({
+        where: { id: input.id },
+        include: {
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+          maker: {
+            select: {
+              name: true,
+              avatarUrl: true,
+            },
+          },
+          _count: {
+            select: {
+              votes: true,
+            },
           },
         },
-        maker: {
-          select: {
-            name: true,
-            avatarUrl: true,
-          },
-        },
-        _count: {
-          select: {
-            votes: true,
-          },
-        },
-      },
-    });
-
-    if (!product) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Product not found',
       });
-    }
 
-    if (product.makerId !== ctx.userId) {
-      throw new TRPCError({
-        code: 'UNAUTHORIZED',
-        message: 'Not authorized to view this product',
-      });
-    }
+      if (!product) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Product not found',
+        });
+      }
 
-    return product;
-  }),
+      if (product.makerId !== ctx.userId) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Not authorized to view this product',
+        });
+      }
+
+      return product;
+    }),
 
   // Toggle vote
   toggleVote: privateProcedure
     .input(z.object({ productId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Must be logged in to vote',
+        });
+      }
+
       const existingVote = await db.vote.findUnique({
         where: {
           userId_productId: {
@@ -331,8 +346,10 @@ export const productRouter = router({
         },
       });
 
+      // Handle vote toggle
       if (existingVote) {
-        return db.vote.delete({
+        // Remove vote
+        await db.vote.delete({
           where: {
             userId_productId: {
               userId: ctx.userId,
@@ -340,14 +357,26 @@ export const productRouter = router({
             },
           },
         });
+      } else {
+        // Add vote
+        await db.vote.create({
+          data: {
+            userId: ctx.userId,
+            productId: input.productId,
+          },
+        });
       }
 
-      return db.vote.create({
-        data: {
-          userId: ctx.userId,
-          productId: input.productId,
-        },
+      // Get updated vote count
+      const newCount = await db.vote.count({
+        where: { productId: input.productId }
       });
+
+      // Return both the count and the new vote status
+      return {
+        count: newCount,
+        hasVoted: !existingVote
+      };
     }),
 
   // Add this new procedure for image uploads
@@ -449,7 +478,7 @@ export const productRouter = router({
       });
     }),
 
-    // check for duplicate name or slug of the product
+  // check for duplicate name or slug of the product
   checkDuplicate: privateProcedure
     .input(z.object({
       name: z.string(),
@@ -458,7 +487,7 @@ export const productRouter = router({
     }))
     .query(async ({ ctx, input }) => {
       const { name, slug, excludeId } = input;
-      
+
       const existingProduct = await db.product.findFirst({
         where: {
           OR: [
@@ -481,8 +510,8 @@ export const productRouter = router({
 
   // Add delete product mutation
   delete: privateProcedure
-    .input(z.object({ 
-      productId: z.string() 
+    .input(z.object({
+      productId: z.string()
     }))
     .mutation(async ({ ctx, input }) => {
       const product = await db.product.findUnique({
@@ -541,7 +570,8 @@ export const productRouter = router({
         },
         _count: {
           select: {
-            votes: true
+            votes: true,
+            comments: true
           }
         }
       }
@@ -583,7 +613,8 @@ export const productRouter = router({
           },
           _count: {
             select: {
-              votes: true
+              votes: true,
+              comments: true,
             }
           }
         }
@@ -622,4 +653,35 @@ export const productRouter = router({
 
     return nextLaunch;
   }),
+
+  // Get current vote count
+  getVoteCount: publicProcedure
+    .input(z.object({ productId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const count = await db.vote.count({
+        where: { productId: input.productId }
+      });
+      return count;
+    }),
+
+  // Subscribe to vote updates
+  onVoteUpdate: publicProcedure
+    .input(z.object({ productId: z.string() }))
+    .subscription(({ input }) => {
+      return observable((emit) => {
+        const onVote = (productId: string, count: number) => {
+          if (productId === input.productId) {
+            emit.next(count);
+          }
+        };
+
+        voteEvents.on('vote', onVote);
+
+        return () => {
+          voteEvents.off('vote', onVote);
+        };
+      });
+    }),
+
+  // Update your toggleVote mutation to emit events
 }); 

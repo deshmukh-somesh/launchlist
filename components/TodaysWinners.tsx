@@ -4,11 +4,10 @@ import { trpc } from "@/app/_trpc/client";
 import LoadingSkeleton from "./LoadingSkeleton";
 import ProductCard from "./ProductCard";
 import { keepPreviousData } from "@tanstack/react-query";
-import type { Product } from "@/types/product";
 
 export default function TodaysWinners() {
-  const { data: products, isLoading } = trpc.product.getTodaysWinners.useQuery(undefined, {
-    refetchInterval: 60000,
+  const { data: winners, isLoading } = trpc.product.getTodaysWinners.useQuery(undefined, {
+    refetchInterval: 60000, // Refresh every minute
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData
   });
@@ -27,21 +26,25 @@ export default function TodaysWinners() {
           </span>
         </div>
         
-        {products && products.length > 0 ? (
+        {winners && winners.length > 0 ? (
           <div className="space-y-6">
-            {products.map((product: Product) => (
+            {winners.map((product, index) => (
               <div key={product.id} className="w-full">
                 <ProductCard 
-                  key={product.id} 
                   product={{
                     ...product,
                     createdAt: new Date(product.createdAt),
                     launchDate: new Date(product.launchDate),
                     categories: product.categories,
                     website: product.website,
-                    isLaunched: product.isLaunched
+                    isLaunched: product.isLaunched,
+                    _count: {
+                      votes: product._count?.votes || 0,
+                      comments: product._count?.comments || 0,
+                    }
                   }}
                   variant="winner"
+                  rank={index + 1} // Add rank for winner badge (1, 2, or 3)
                 />
               </div>
             ))}
@@ -54,4 +57,4 @@ export default function TodaysWinners() {
       </div>
     </div>
   );
-} 
+}

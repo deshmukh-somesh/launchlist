@@ -52,7 +52,11 @@ export default function PastLaunches() {
                     ...product,
                     createdAt: new Date(product.createdAt),
                     launchDate: new Date(product.launchDate),
-                    categories: product.categories
+                    categories: product.categories,
+                    _count: {
+                      votes: product._count?.votes || 0,
+                      comments: product._count?.comments || 0,
+                    }
                   }}
                   variant="default"
                 />

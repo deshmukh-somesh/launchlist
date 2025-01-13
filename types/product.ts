@@ -20,5 +20,6 @@ export interface Product {
   };
   _count?: {
     votes: number;
+    comments: number;
   };
 } 
