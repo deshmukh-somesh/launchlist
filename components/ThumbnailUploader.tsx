@@ -22,15 +22,15 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
   }, [onChange]);
 
   return (
-    <div className="w-full">
+    <div className="w-[100px]">
       {value ? (
         // Preview Container
-        <div className="relative w-full aspect-video bg-gray-50 rounded-lg overflow-hidden">
+        <div className="relative w-[100px] h-[100px] aspect-square bg-gray-50 rounded-lg overflow-hidden">
           <Image
             src={value}
             alt="Thumbnail preview"
             fill
-            className="object-contain"
+            className="object-cover"
           />
           {!disabled && (
             <button
@@ -39,19 +39,19 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
                         text-white hover:bg-red-600 transition"
               type="button"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative w-[100px] h-[100px]">
           {isUploading && (
             <div className="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               <span className="mt-2 text-sm text-gray-600">Uploading... {uploadProgress}%</span>
               <div className="w-48 h-2 bg-gray-200 rounded-full mt-2">
-                <div 
-                  className="h-full bg-blue-500 rounded-full transition-all duration-300" 
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -63,10 +63,12 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
               mode: "auto",
             }}
             content={{
-              label: "Drop your thumbnail here",
-              button: "Choose Thumbnail",
+
+              label: "Drop image",
+              // button: "Choose Image",
               allowedContent: "1 image up to 4MB",
-                }}
+
+            }}
             onBeforeUploadBegin={(files) => {
               setIsUploading(true);
               setUploadProgress(0);
@@ -104,7 +106,8 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
             ut-allowed-content:text-gray-500 ut-allowed-content:text-sm
             ut-button:bg-blue-500 ut-button:text-white ut-button:rounded-md
             ut-progress:text-blue-500 ut-progress:font-bold
-            ut-progress-bar:bg-blue-500"
+            ut-progress-bar:bg-blue-500 aspect-square max-w-[100px] max-h-[100px]"
+
           />
         </div>
       )}
