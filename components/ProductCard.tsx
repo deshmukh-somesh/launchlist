@@ -149,10 +149,13 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
             {/* Left side - Thumbnail */}
             <div className="flex-shrink-0 w-32 h-32">
                 {product.thumbnail ? (
-                    <img
+                    <Image
                         src={product.thumbnail}
                         alt={product.name}
-                        className="w-full h-full object-cover rounded-lg"
+                        className=" object-cover rounded-lg"
+                        sizes="(max-width: 768px) 100px, 128px"
+                        width={128}
+                        height={128}    
                     />
                 ) : (
                     <div className="w-full h-full bg-gray-200 rounded-lg" />

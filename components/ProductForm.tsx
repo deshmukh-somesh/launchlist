@@ -178,6 +178,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         <div className="space-y-4">
           <label className="block font-medium">Product Thumbnail</label>
           <ThumbnailUploader
+          
             value={thumbnail}
             onChange={(url) => setValue('thumbnail', url)}
             disabled={readonly}
