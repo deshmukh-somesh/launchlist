@@ -52,7 +52,7 @@ const nextConfig = {
         pathname: '/**',
       }
     ],
-    domains: ['api.producthunt.com', 'pdfaskai.com', 'www.pdfaskai.com'],
+    domains: ['api.producthunt.com', 'pdfaskai.com', 'www.pdfaskai.com', 'uploadthing.com', 'utfs.io'],
     unoptimized: false,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

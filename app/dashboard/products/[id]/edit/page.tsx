@@ -59,7 +59,8 @@ export default function EditProductPage() {
     website: product.website,
     pricing: product.pricing,
     launchDate: new Date(product.launchDate).toISOString().split('T')[0],
-    isLaunched: product.isLaunched
+    isLaunched: product.isLaunched,
+    thumbnail: product.thumbnail || ''
   };
 
   return (

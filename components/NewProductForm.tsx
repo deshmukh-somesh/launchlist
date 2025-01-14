@@ -5,6 +5,7 @@ import { useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from '@/components/ui/use-toast';
+import { ThumbnailUploader } from "./ThumbnailUploader";
 
 type FormInputs = {
   name: string;
@@ -15,6 +16,7 @@ type FormInputs = {
   pricing: 'FREE' | 'PAID' | 'SUBSCRIPTION';
   launchDate: string;
   isLaunched: boolean;
+  thumbnail: string | null; 
 };
 
 export default function NewProductForm() {
@@ -26,10 +28,30 @@ export default function NewProductForm() {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
   
-  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
+  // const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
+  //   defaultValues: {
+  //     pricing: 'FREE',
+  //     launchDate: minDate // Set default to tomorrow
+  //   }
+  // });
+
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors },
+    watch,
+    setValue 
+  } = useForm<FormInputs, any>({
     defaultValues: {
       pricing: 'FREE',
-      launchDate: minDate // Set default to tomorrow
+      launchDate: minDate,
+      thumbnail: null,  // Add this
+      name: '',
+      slug: '',
+      tagline: '',
+      description: '',
+      website: '',
+      isLaunched: false
     }
   });
 
@@ -60,13 +82,11 @@ export default function NewProductForm() {
     try {
       await createProduct.mutateAsync({
         ...data,
-        thumbnail: null,
         categoryIds: [],
         images: [],
         isLaunched: false
       });
     } catch (error) {
-      // toast.error('Failed to create product');
       console.error('Error creating product:', error);
     } finally {
       setIsSubmitting(false);
@@ -77,6 +97,15 @@ export default function NewProductForm() {
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Add ThumbnailUploader */}
+          <div className="space-y-4">
+          <label className="block mb-1">Product Thumbnail</label>
+          <ThumbnailUploader
+            value={watch('thumbnail')}
+            onChange={(url) => setValue('thumbnail', url)}
+            disabled={false}
+          />
+        </div>
         <div>
           <label className="block mb-1">Name</label>
           <input
