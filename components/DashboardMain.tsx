@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/app/_trpc/client";
-import { 
+import {
   ArrowUpCircle,
-  MessageCircle, 
+  MessageCircle,
   Rocket,
   FolderHeart,
   Plus,
@@ -36,6 +36,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Image from 'next/image';
+import { ImageIcon } from 'lucide-react';
 
 // Types based on your schema
 type DashboardProduct = {
@@ -56,7 +58,7 @@ type DashboardProduct = {
 export default function DashboardMain() {
   const router = useRouter();
   const utils = trpc.useContext();
-  
+
   // Combine the isPending states into one
   const { data, isPending: isProductsLoading } = trpc.product.getDashboardProducts.useQuery();
   const [selectedProduct, setSelectedProduct] = useState<DashboardProduct | null>(null);
@@ -85,8 +87,8 @@ export default function DashboardMain() {
     }
   });
 
-   // Add the delete mutation
-   const deleteProduct = trpc.product.delete.useMutation({
+  // Add the delete mutation
+  const deleteProduct = trpc.product.delete.useMutation({
     onSuccess: async () => {
       toast({
         title: 'Product deleted successfully!',
@@ -127,7 +129,7 @@ export default function DashboardMain() {
     <div className="max-w-7xl mx-auto p-6">
       {/* Stats Overview */}
       <div className="grid gap-6 mb-8 md:grid-cols-3">
-        
+
         <Card>
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
@@ -207,14 +209,19 @@ export default function DashboardMain() {
                     <CardContent className="p-6">
                       <div className="flex gap-4">
                         {/* Product Thumbnail */}
-                        <div className="w-[100px] h-[100px] bg-gray-100 rounded-lg flex-shrink-0">
-                          {product.thumbnail && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                        <div className="w-[100px] h-[100px] bg-gray-100 rounded-lg flex-shrink-0 relative">
+                          {product.thumbnail ? (
+                            <Image
                               src={product.thumbnail}
                               alt={product.name}
-                              className="w-full h-full object-cover rounded-lg"
+                              fill
+                              className="object-cover rounded-lg"
+                              sizes="100px"
                             />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <ImageIcon className="h-8 w-8" />
+                            </div>
                           )}
                         </div>
 
@@ -288,7 +295,7 @@ export default function DashboardMain() {
                               </>
                             ) : (
                               <div className="flex gap-2 items-center">
-                                <Button 
+                                <Button
                                   variant="outline"
                                   onClick={() => {
                                     setSelectedProduct(product);
@@ -355,7 +362,7 @@ export default function DashboardMain() {
           <DialogHeader>
             <DialogTitle>Product Details</DialogTitle>
           </DialogHeader>
-          
+
           {isDetailsLoading ? (
             <div className="h-full flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -386,8 +393,8 @@ export default function DashboardMain() {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Website</label>
                 <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  <a href={productDetails.website} target="_blank" rel="noopener noreferrer" 
-                     className="text-blue-600 hover:underline">
+                  <a href={productDetails.website} target="_blank" rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline">
                     {productDetails.website}
                   </a>
                 </div>
