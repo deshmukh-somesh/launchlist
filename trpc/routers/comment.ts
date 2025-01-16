@@ -17,6 +17,17 @@ export const commentRouter = router({
           userId: ctx.userId,
           parentId: input.parentId,
         },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              avatarUrl: true,
+              username: true,
+            }
+          }
+        }
       });
 
       // Create notification for product maker
@@ -61,17 +72,16 @@ export const commentRouter = router({
         skip: cursor,
         where: { 
           productId,
-          parentId: null // Only get top-level comments
+          parentId: null
         },
         include: {
-          user: true,
-          replies: {
-            include: { 
-              user: true,
-            },
-            take: 3, // Limit initial replies
-            orderBy: {
-              createdAt: 'desc'
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              avatarUrl: true,
+              username: true,
             }
           },
           _count: {
@@ -85,15 +95,10 @@ export const commentRouter = router({
         },
       });
 
-      let nextCursor: number | undefined = undefined;
-      if (items.length > limit) {
-        const nextItem = items.pop();
-        nextCursor = cursor + limit;
-      }
-
       return {
         items,
-        nextCursor,
+        nextCursor: items.length > limit ? cursor + limit : undefined,
+        totalComments: await db.comment.count({ where: { productId } })
       };
     }),
 
@@ -130,5 +135,22 @@ export const commentRouter = router({
         items: replies,
         nextCursor,
       };
+    }),
+
+  edit: privateProcedure
+    .input(z.object({
+      commentId: z.string(),
+      content: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return db.comment.update({
+        where: {
+          id: input.commentId,
+          userId: ctx.userId, // Ensure user owns the comment
+        },
+        data: {
+          content: input.content,
+        },
+      });
     }),
 }); 
