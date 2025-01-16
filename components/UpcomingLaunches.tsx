@@ -126,7 +126,7 @@ export default function UpcomingLaunches() {
    <div className="py-12">
      <div className="max-w-7xl mx-auto px-4">
        <div className="flex items-center justify-between mb-8">
-         <h2 className="text-3xl font-bold">Upcoming Launches</h2>
+         <h2 className="text-3xl font-bold">Launching Today</h2>
        </div>
         {upcomingLaunches.length > 0 ? (
          <div className="space-y-6">
