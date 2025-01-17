@@ -1,4 +1,3 @@
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,16 +7,15 @@ import {
 } from './ui/dropdown-menu';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import Image from 'next/image';
-// import { Icons } from '@/components/Icons';
-import Link from 'next/link';
-import { Gem } from 'lucide-react';
 import { LogoutLink } from '@kinde-oss/kinde-auth-nextjs/server';
+import Link from 'next/link';
+import { User, LogOut, LayoutDashboard } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface UserAccountNavProps {
   email: string | undefined;
   name: string;
-  imageUrl: string | null; // Note: Updated type to `string | null` to handle null cases
+  imageUrl: string | null;
 }
 
 const UserAccountNav = async ({
@@ -25,65 +23,123 @@ const UserAccountNav = async ({
   imageUrl,
   name,
 }: UserAccountNavProps) => {
- 
-
-  
-
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        asChild
-        className='overflow-visible'>
-      <Button className='rounded-full h-8 w-8 aspect-square bg-slate-400'>
-          <Avatar className='relative w-8 h-8'>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          className={cn(
+            "relative h-9 w-9 rounded-full",
+            "border border-[#2A2B3C]",
+            "hover:border-[#6E3AFF]/50",
+            "transition-colors duration-200"
+          )}
+        >
+          <Avatar className="h-9 w-9 relative">
             {imageUrl ? (
-              <div className='relative aspect-square h-full w-full'>
-                {/* <Image
-                  fill
-                  src={'https://github.com/shadcn.png'}
-                  alt='profile picture'
-                  referrerPolicy='no-referrer'
-                /> */}
-                <AvatarImage src='https://github.com/shadcn.png'/>
-              </div>
+              <AvatarImage
+                src={imageUrl}
+                alt={name}
+                className="object-cover"
+              />
             ) : (
-              <AvatarFallback>
-                <span className='sr-only'>{name}</span>
-                {/* <Icons.user className='h-4 w-4 text-zinc-900' /> */}
+              <AvatarFallback 
+                className={cn(
+                  "bg-[#151725]",
+                  "text-[#6E3AFF]",
+                  "font-medium"
+                )}
+              >
+                {name.charAt(0).toUpperCase()}
               </AvatarFallback>
             )}
+
+            {/* Online status indicator */}
+            <span className={cn(
+              "absolute bottom-0 right-0",
+              "h-2.5 w-2.5 rounded-full",
+              "bg-green-500",
+              "ring-2 ring-[#151725]"
+            )} />
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className='bg-white' align='end'>
-        <div className='flex items-center justify-start gap-2 p-2'>
-          <div className='flex flex-col space-y-0.5 leading-none'>
-            {name && (
-              <p className='font-medium text-sm text-black'>
-                {name}
-              </p>
+      <DropdownMenuContent 
+        align="end"
+        className={cn(
+          "w-64 p-2",
+          "bg-[#151725] border border-[#2A2B3C]",
+          "shadow-xl shadow-black/10"
+        )}
+      >
+        {/* User Info */}
+        <div className={cn(
+          "flex items-center gap-3 p-2",
+          "rounded-md",
+          "hover:bg-[#1A1C2E] transition-colors"
+        )}>
+          <Avatar className="h-8 w-8">
+            {imageUrl ? (
+              <AvatarImage
+                src={imageUrl}
+                alt={name}
+                className="object-cover"
+              />
+            ) : (
+              <AvatarFallback className="bg-[#1A1C2E] text-[#6E3AFF]">
+                {name.charAt(0).toUpperCase()}
+              </AvatarFallback>
             )}
+          </Avatar>
+
+          <div className="flex flex-col">
+            <p className="text-sm font-medium text-white">
+              {name}
+            </p>
             {email && (
-              <p className='w-[200px] truncate text-xs text-zinc-700'>
+              <p className="text-xs text-gray-400 truncate">
                 {email}
               </p>
             )}
           </div>
         </div>
 
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="my-2 bg-[#2A2B3C]" />
 
+        {/* Dashboard Link */}
         <DropdownMenuItem asChild>
-          <Link href='/dashboard'>Dashboard</Link>
+          <Link 
+            href="/dashboard" 
+            className={cn(
+              "flex items-center gap-2",
+              "cursor-pointer rounded-md",
+              "text-gray-300 hover:text-white",
+              "hover:bg-[#1A1C2E]",
+              "transition-colors duration-200"
+            )}
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </Link>
         </DropdownMenuItem>
 
-        
+        <DropdownMenuSeparator className="my-2 bg-[#2A2B3C]" />
 
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem className='cursor-pointer'>
-            <LogoutLink>Log out</LogoutLink>
+        {/* Logout Button */}
+        <DropdownMenuItem asChild>
+          <LogoutLink 
+            className={cn(
+              "flex items-center gap-2",
+              "cursor-pointer rounded-md",
+              "text-red-400 hover:text-red-300",
+              "hover:bg-red-500/10",
+              "transition-colors duration-200"
+            )}
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </LogoutLink>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

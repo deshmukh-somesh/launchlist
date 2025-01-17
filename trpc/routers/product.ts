@@ -75,6 +75,7 @@ export const productRouter = router({
         maker: {
           select: {
             name: true,
+            username: true,
             avatarUrl: true
           }
         },
@@ -123,6 +124,7 @@ export const productRouter = router({
           select: {
             name: true,
             avatarUrl: true,
+            username: true,
           }
         },
         _count: {
@@ -171,6 +173,7 @@ export const productRouter = router({
         maker: {
           select: {
             name: true,
+            username: true,
             avatarUrl: true
           }
         },
@@ -588,7 +591,8 @@ export const productRouter = router({
         maker: {
           select: {
             name: true,
-            avatarUrl: true
+            avatarUrl: true,
+            username: true
           }
         },
         _count: {

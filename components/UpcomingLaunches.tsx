@@ -99,61 +99,77 @@
 //     </div>
 //   );
 // }
-
 "use client";
 import { trpc } from "@/app/_trpc/client";
 import ProductCard from "./ProductCard";
 import LoadingSkeleton from "./LoadingSkeleton";
 
 export default function UpcomingLaunches() {
- const { data: products, isLoading } = trpc.product.getUpcoming.useQuery(
-   undefined,
-   {
-     refetchInterval: 30000,
-     refetchOnWindowFocus: true,
-   }
- );
+  const { data: products, isLoading } = trpc.product.getUpcoming.useQuery(
+    undefined,
+    {
+      refetchInterval: 30000,
+      refetchOnWindowFocus: true,
+    }
+  );
 
- // show loading skeleton whicl edata is being fetched. 
- if(isLoading){
-  return <LoadingSkeleton />
- }
-  // No more filtering for tomorrow's launches
- const upcomingLaunches = products?.sort((a, b) => 
-   new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime()
- ) ?? [];
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  const upcomingLaunches = products?.sort((a, b) =>
+    new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime()
+  ) ?? [];
+
   return (
-   <div className="py-12">
-     <div className="max-w-7xl mx-auto px-4">
-       <div className="flex items-center justify-between mb-8">
-         <h2 className="text-3xl font-bold">Launching Today</h2>
-       </div>
+    <div className="py-12 relative">
+      {/* Subtle gradient background effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 relative">
+        <div className="flex items-center justify-between mb-8">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-bold text-white">
+              Launching Today
+            </h2>
+            <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] rounded-full" />
+          </div>
+        </div>
+
         {upcomingLaunches.length > 0 ? (
-         <div className="space-y-6">
-           {upcomingLaunches.map((product) => (
-             <div key={product.id} className="max-w-7xl mx-5">
-               <ProductCard 
-                 product={{
-                   ...product,
-                   createdAt: new Date(product.createdAt),
-                   launchDate: new Date(product.launchDate),
-                   categories: product.categories,
-                   _count: {
-                    votes: product._count?.votes || 0,
-                    comments: product._count?.comments || 0,
-                   }
-                 }}
-                 variant="upcoming"
-               />
-             </div>
-           ))}
-         </div>
-       ) : (
-         <p className="text-center text-gray-500">
-           No upcoming launches at the moment.
-         </p>
-       )}
-     </div>
-   </div>
- );
+          <div className="space-y-6">
+            {upcomingLaunches.map((product) => (
+              <div 
+                key={product.id} 
+                className="max-w-7xl mx-5 transform transition-all duration-300 hover:translate-y-[-2px]"
+              >
+                <ProductCard
+                  product={{
+                    ...product,
+                    createdAt: new Date(product.createdAt),
+                    launchDate: new Date(product.launchDate),
+                    categories: product.categories,
+                    _count: {
+                      votes: product._count?.votes || 0,
+                      comments: product._count?.comments || 0,
+                    }
+                  }}
+                  variant="upcoming"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-[#2A2B3C] bg-[#151725] p-8 text-center">
+            <p className="text-gray-400 text-lg">
+              No upcoming launches at the moment.
+            </p>
+            <p className="text-gray-500 mt-2 text-sm">
+              Check back soon for new products!
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

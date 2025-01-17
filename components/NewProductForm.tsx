@@ -6,6 +6,8 @@ import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from '@/components/ui/use-toast';
 import { ThumbnailUploader } from "./ThumbnailUploader";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type FormInputs = {
   name: string;
@@ -16,36 +18,28 @@ type FormInputs = {
   pricing: 'FREE' | 'PAID' | 'SUBSCRIPTION';
   launchDate: string;
   isLaunched: boolean;
-  thumbnail: string | null; 
+  thumbnail: string | null;
 };
 
 export default function NewProductForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Get tomorrow's date for minimum launch date
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
   
-  // const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>({
-  //   defaultValues: {
-  //     pricing: 'FREE',
-  //     launchDate: minDate // Set default to tomorrow
-  //   }
-  // });
-
   const { 
     register, 
     handleSubmit, 
     formState: { errors },
     watch,
     setValue 
-  } = useForm<FormInputs, any>({
+  } = useForm<FormInputs>({
     defaultValues: {
       pricing: 'FREE',
       launchDate: minDate,
-      thumbnail: null,  // Add this
+      thumbnail: null,
       name: '',
       slug: '',
       tagline: '',
@@ -62,7 +56,6 @@ export default function NewProductForm() {
         title: 'Product created successfully!',
         variant: 'default',
       });
-      // Invalidate the dashboard products query
       await utils.product.getDashboardProducts.invalidate();
       router.push('/dashboard');
       router.refresh();
@@ -93,68 +86,128 @@ export default function NewProductForm() {
     }
   };
 
+  const inputClasses = cn(
+    "w-full p-3 bg-[#151725] border rounded-lg transition-colors",
+    "focus:outline-none focus:ring-2",
+    "disabled:opacity-50 disabled:cursor-not-allowed",
+    "text-white placeholder-gray-500"
+  );
+
+  const inputWrapper = (hasError: boolean) => cn(
+    inputClasses,
+    hasError 
+      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" 
+      : "border-[#2A2B3C] focus:border-[#6E3AFF] focus:ring-[#6E3AFF]/20"
+  );
+
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Add ThumbnailUploader */}
-          <div className="space-y-4">
-          <label className="block mb-1">Product Thumbnail</label>
-          <ThumbnailUploader
-            value={watch('thumbnail')}
-            onChange={(url) => setValue('thumbnail', url)}
-            disabled={false}
-          />
+    <div className="w-full max-w-2xl mx-auto animate-fade-in-up">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Thumbnail Upload */}
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-200">
+            Product Thumbnail
+          </label>
+          <div className="p-4 bg-[#1A1C2E] rounded-lg border border-[#2A2B3C]">
+            <ThumbnailUploader
+              value={watch('thumbnail')}
+              onChange={(url) => setValue('thumbnail', url)}
+              disabled={isSubmitting}
+            />
+          </div>
         </div>
+
+        {/* Name */}
         <div>
-          <label className="block mb-1">Name</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Name
+          </label>
           <input
             {...register("name", { required: "Name is required" })}
-            className="w-full p-2 border rounded"
+            className={inputWrapper(!!errors.name)}
+            placeholder="Enter product name"
+            disabled={isSubmitting}
           />
-          {errors.name && <p className="text-red-500">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-red-400 text-sm mt-1">{errors.name.message}</p>
+          )}
         </div>
 
+        {/* Slug */}
         <div>
-          <label className="block mb-1">Slug</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Slug
+          </label>
           <input
             {...register("slug", { required: "Slug is required" })}
-            className="w-full p-2 border rounded"
+            className={inputWrapper(!!errors.slug)}
+            placeholder="product-url-slug"
+            disabled={isSubmitting}
           />
-          {errors.slug && <p className="text-red-500">{errors.slug.message}</p>}
+          {errors.slug && (
+            <p className="text-red-400 text-sm mt-1">{errors.slug.message}</p>
+          )}
         </div>
 
+        {/* Tagline */}
         <div>
-          <label className="block mb-1">Tagline</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Tagline
+          </label>
           <input
             {...register("tagline", { required: "Tagline is required" })}
-            className="w-full p-2 border rounded"
+            className={inputWrapper(!!errors.tagline)}
+            placeholder="Brief description of your product"
+            disabled={isSubmitting}
           />
+          {errors.tagline && (
+            <p className="text-red-400 text-sm mt-1">{errors.tagline.message}</p>
+          )}
         </div>
 
+        {/* Description */}
         <div>
-          <label className="block mb-1">Description</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Description
+          </label>
           <textarea
             {...register("description", { required: "Description is required" })}
-            className="w-full p-2 border rounded"
+            className={cn(inputWrapper(!!errors.description), "min-h-[120px] resize-y")}
+            placeholder="Detailed description of your product"
             rows={4}
+            disabled={isSubmitting}
           />
+          {errors.description && (
+            <p className="text-red-400 text-sm mt-1">{errors.description.message}</p>
+          )}
         </div>
 
+        {/* Website */}
         <div>
-          <label className="block mb-1">Website</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Website
+          </label>
           <input
             type="url"
             {...register("website", { required: "Website URL is required" })}
-            className="w-full p-2 border rounded"
+            className={inputWrapper(!!errors.website)}
+            placeholder="https://your-product.com"
+            disabled={isSubmitting}
           />
+          {errors.website && (
+            <p className="text-red-400 text-sm mt-1">{errors.website.message}</p>
+          )}
         </div>
 
+        {/* Pricing */}
         <div>
-          <label className="block mb-1">Pricing</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Pricing
+          </label>
           <select
             {...register("pricing")}
-            className="w-full p-2 border rounded"
+            className={cn(inputWrapper(!!errors.pricing), "appearance-none bg-[#151725]")}
+            disabled={isSubmitting}
           >
             <option value="FREE">Free</option>
             <option value="PAID">Paid</option>
@@ -162,8 +215,11 @@ export default function NewProductForm() {
           </select>
         </div>
 
+        {/* Launch Date */}
         <div>
-          <label className="block mb-1">Launch Date</label>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Launch Date
+          </label>
           <input
             type="date"
             {...register("launchDate", { 
@@ -172,32 +228,42 @@ export default function NewProductForm() {
                 const selectedDate = new Date(value);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
-                // Check if selected date is at least tomorrow
                 const tomorrow = new Date(today);
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                
-                return selectedDate >= tomorrow || 
-                  "Launch date must be at least tomorrow";
+                return selectedDate >= tomorrow || "Launch date must be at least tomorrow";
               }
             })}
-            min={minDate} // Prevent selecting dates before tomorrow
-            className="w-full p-2 border rounded"
+            min={minDate}
+            className={inputWrapper(!!errors.launchDate)}
+            disabled={isSubmitting}
           />
           {errors.launchDate && (
-            <p className="text-red-500 text-sm mt-1">{errors.launchDate.message}</p>
+            <p className="text-red-400 text-sm mt-1">{errors.launchDate.message}</p>
           )}
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 
-                   disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className={cn(
+            "w-full p-4 rounded-lg font-medium transition-all",
+            "bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]",
+            "text-white hover:opacity-90",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            "flex items-center justify-center gap-2"
+          )}
         >
-          {isSubmitting ? "Creating..." : "Create Product"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Creating...</span>
+            </>
+          ) : (
+            "Create Product"
+          )}
         </button>
       </form>
     </div>
   );
-} 
+}

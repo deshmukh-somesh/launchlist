@@ -16,6 +16,7 @@ export interface Product {
   }[];
   maker: {
     name: string | null;
+    username: string | null;
     avatarUrl: string | null;
   };
   _count?: {

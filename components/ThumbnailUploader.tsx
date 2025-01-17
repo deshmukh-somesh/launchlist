@@ -3,9 +3,10 @@
 import { useCallback, useState } from "react";
 import { UploadDropzone } from "@uploadthing/react";
 import Image from "next/image";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, ImagePlus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
+import { cn } from "@/lib/utils";
 
 interface ThumbnailUploaderProps {
   value: string | null;
@@ -25,18 +26,27 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
     <div className="w-[100px]">
       {value ? (
         // Preview Container
-        <div className="relative w-[100px] h-[100px] aspect-square bg-gray-50 rounded-lg overflow-hidden">
+        <div className={cn(
+          "relative w-[100px] h-[100px] aspect-square rounded-lg overflow-hidden",
+          "bg-[#151725] border border-[#2A2B3C]",
+          "group hover:border-[#6E3AFF]/30 transition-colors"
+        )}>
           <Image
             src={value}
             alt="Thumbnail preview"
             fill
-            className="object-cover"
+            className="object-cover transition-transform group-hover:scale-105"
           />
           {!disabled && (
             <button
               onClick={removeImage}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 
-                        text-white hover:bg-red-600 transition"
+              className={cn(
+                "absolute top-2 right-2 p-1.5 rounded-full",
+                "bg-red-500/80 backdrop-blur-sm",
+                "text-white hover:bg-red-600",
+                "transition-all duration-200 opacity-0 group-hover:opacity-100",
+                "hover:scale-110"
+              )}
               type="button"
             >
               <X className="h-3 w-3" />
@@ -46,12 +56,21 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
       ) : (
         <div className="relative w-[100px] h-[100px]">
           {isUploading && (
-            <div className="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <span className="mt-2 text-sm text-gray-600">Uploading... {uploadProgress}%</span>
-              <div className="w-48 h-2 bg-gray-200 rounded-full mt-2">
+            <div className={cn(
+              "absolute inset-0 z-10",
+              "bg-[#151725]/90 backdrop-blur-sm",
+              "flex flex-col items-center justify-center"
+            )}>
+              <Loader2 className="h-8 w-8 animate-spin text-[#6E3AFF]" />
+              <span className="mt-2 text-sm text-gray-300">
+                Uploading... {uploadProgress}%
+              </span>
+              <div className="w-16 h-1 bg-[#2A2B3C] rounded-full mt-2 overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                  className={cn(
+                    "h-full rounded-full transition-all duration-300",
+                    "bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]"
+                  )}
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -63,11 +82,8 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
               mode: "auto",
             }}
             content={{
-
               label: "Drop image",
-              // button: "Choose Image",
               allowedContent: "1 image up to 4MB",
-
             }}
             onBeforeUploadBegin={(files) => {
               setIsUploading(true);
@@ -100,15 +116,28 @@ export function ThumbnailUploader({ value, onChange, disabled = false }: Thumbna
                 variant: "destructive",
               });
             }}
-            className="bg-white border-2 border-dashed border-gray-300 rounded-lg
-            ut-label:text-gray-800 ut-label:font-medium
-            ut-upload-icon:text-gray-800 ut-upload-icon:w-10 ut-upload-icon:h-10
-            ut-allowed-content:text-gray-500 ut-allowed-content:text-sm
-            ut-button:bg-blue-500 ut-button:text-white ut-button:rounded-md
-            ut-progress:text-blue-500 ut-progress:font-bold
-            ut-progress-bar:bg-blue-500 aspect-square max-w-[100px] max-h-[100px]"
-
+            className={cn(
+              "bg-[#151725] border-2 border-dashed border-[#2A2B3C]",
+              "hover:border-[#6E3AFF]/30 transition-all duration-200",
+              "rounded-lg aspect-square max-w-[100px] max-h-[100px]",
+              "ut-label:text-gray-400 ut-label:font-medium",
+              "ut-upload-icon:text-[#6E3AFF] ut-upload-icon:w-10 ut-upload-icon:h-10",
+              "ut-allowed-content:text-gray-500 ut-allowed-content:text-sm",
+              "ut-button:bg-gradient-to-r ut-button:from-[#6E3AFF] ut-button:to-[#2563EB]",
+              "ut-button:text-white ut-button:rounded-md",
+              "ut-progress:text-[#6E3AFF] ut-progress:font-bold",
+              "ut-progress-bar:bg-gradient-to-r ut-progress-bar:from-[#6E3AFF] ut-progress-bar:to-[#2563EB]"
+            )}
           />
+
+          {/* Optional: Add icon overlay */}
+          <div className={cn(
+            "absolute inset-0 pointer-events-none",
+            "flex items-center justify-center",
+            isUploading ? "opacity-0" : "opacity-50"
+          )}>
+            <ImagePlus className="w-6 h-6 text-[#6E3AFF]" />
+          </div>
         </div>
       )}
     </div>
