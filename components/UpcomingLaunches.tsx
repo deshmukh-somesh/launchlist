@@ -171,7 +171,7 @@ export default function UpcomingLaunches() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-[#2A2B3C] bg-[#151725] p-8 text-center">
+          <div className="max-w-4xl mx-auto rounded-xl border border-[#2A2B3C] bg-[#151725] p-8 text-center">
             <p className="text-gray-400 text-lg">
               No upcoming launches at the moment.
             </p>
