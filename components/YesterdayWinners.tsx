@@ -96,7 +96,7 @@ export default function YesterdayWinners() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-[#2A2B3C] bg-[#151725] p-8 text-center">
+          <div className="max-w-4xl mx-auto rounded-xl border border-[#2A2B3C] bg-[#151725] p-8 text-center">
             <Award className="h-12 w-12 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400 text-lg">
               No winners from yesterday
