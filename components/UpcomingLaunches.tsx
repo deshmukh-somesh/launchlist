@@ -115,6 +115,7 @@ export default function UpcomingLaunches() {
       refetchOnWindowFocus: true,
     }
   );
+  console.log("Upcoming products:", products);
 
   if (isLoading) {
     return <LoadingSkeleton variant="upcoming" />;

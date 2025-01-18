@@ -17,7 +17,6 @@ type FormInputs = {
   website: string;
   pricing: 'FREE' | 'PAID' | 'SUBSCRIPTION';
   launchDate: string;
-  launchTime: string; // Add this new field
   isLaunched: boolean;
   thumbnail: string | null;
 };
@@ -25,23 +24,21 @@ type FormInputs = {
 export default function NewProductForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
-  const defaultTime = "09:00"; // Default to 9 AM
-
-  const {
-    register,
-    handleSubmit,
+  
+  const { 
+    register, 
+    handleSubmit, 
     formState: { errors },
     watch,
-    setValue
+    setValue 
   } = useForm<FormInputs>({
     defaultValues: {
       pricing: 'FREE',
       launchDate: minDate,
-      launchTime: defaultTime,
       thumbnail: null,
       name: '',
       slug: '',
@@ -76,35 +73,8 @@ export default function NewProductForm() {
   const onSubmit = async (data: FormInputs) => {
     setIsSubmitting(true);
     try {
-      // Combine date and time into single datetime
-      // const launchDateTime = new Date(`${data.launchDate}T${data.launchTime}`);
-      // Create date object from date and time inputs 
-      const [year, month, day] = data.launchDate.split('-');
-      const [hours, minutes] = data.launchTime.split(':');
-
-      const launchDateTime = new Date(
-        parseInt(year),
-        parseInt(month) - 1,
-        parseInt(day),
-        parseInt(hours),
-        parseInt(minutes)
-      );
-
-      // Format the date maintaining the local time
-    const formattedDate = launchDateTime.getFullYear() + '-' +
-    String(launchDateTime.getMonth() + 1).padStart(2, '0') + '-' +
-    String(launchDateTime.getDate()).padStart(2, '0') + ' ' +
-    String(launchDateTime.getHours()).padStart(2, '0') + ':' +
-    String(launchDateTime.getMinutes()).padStart(2, '0') + ':00';
-
-      // Add timezone offset to ensure correct UTC time
-      // const offset = launchDateTime.getTimezoneOffset();
-      // launchDateTime.setMinutes(launchDateTime.getMinutes() - offset);
-
       await createProduct.mutateAsync({
         ...data,
-        // launchDate: launchDateTime.toISOString().slice(0, 19).replace('T', ' '),
-        launchDate: formattedDate,
         categoryIds: [],
         images: [],
         isLaunched: false
@@ -125,8 +95,8 @@ export default function NewProductForm() {
 
   const inputWrapper = (hasError: boolean) => cn(
     inputClasses,
-    hasError
-      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+    hasError 
+      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" 
       : "border-[#2A2B3C] focus:border-[#6E3AFF] focus:ring-[#6E3AFF]/20"
   );
 
@@ -248,40 +218,27 @@ export default function NewProductForm() {
         {/* Launch Date */}
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-2">
-            Launch Date and Time
+            Launch Date
           </label>
-          <div className="flex gap-2">
-            <input
-              type="date"
-              {...register("launchDate", {
-                required: "Launch date is required",
-                // validate: (value) => {
-                //   const selectedDate = new Date(value);
-                //   const today = new Date();
-                //   today.setHours(0, 0, 0, 0);
-                //   const tomorrow = new Date(today);
-                //   tomorrow.setDate(tomorrow.getDate() + 1);
-                //   return selectedDate >= tomorrow || "Launch date must be at least tomorrow";
-                // }
-              })}
-              // min={minDate}
-              className={cn(inputWrapper(!!errors.launchDate), "flex-1")}
-              disabled={isSubmitting}
-            />
-            <input
-              type="time"
-              {...register("launchTime", {
-                required: "Launch time is required"
-              })}
-              className={cn(inputWrapper(!!errors.launchTime), "w-32")}
-              disabled={isSubmitting}
-            />
-          </div>
+          <input
+            type="date"
+            {...register("launchDate", { 
+              required: "Launch date is required",
+              validate: (value) => {
+                const selectedDate = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return selectedDate >= tomorrow || "Launch date must be at least tomorrow";
+              }
+            })}
+            min={minDate}
+            className={inputWrapper(!!errors.launchDate)}
+            disabled={isSubmitting}
+          />
           {errors.launchDate && (
             <p className="text-red-400 text-sm mt-1">{errors.launchDate.message}</p>
-          )}
-          {errors.launchTime && (
-            <p className="text-red-400 text-sm mt-1">{errors.launchTime.message}</p>
           )}
         </div>
 

@@ -13,19 +13,22 @@ interface CountdownTime {
 }
 
 interface NextLaunch {
+  name: string;
   launchDate: string;
-  productName?: string; // Make it optional since it might not always be available
 }
 
 export default function LaunchCountdown() {
   const [countdown, setCountdown] = useState<CountdownTime>({ hours: 0, minutes: 0, seconds: 0 });
   
-  const { data: nextLaunch, isLoading } = trpc.product.getNextLaunch.useQuery<NextLaunch>(undefined, {
+  const { data: nextLaunch, isLoading } = trpc.product.getNextLaunch.useQuery(undefined, {
     refetchInterval: 60000,
   });
 
   const calculateTimeLeft = (targetDate: Date): CountdownTime => {
-    const totalSeconds = Math.max(0, differenceInSeconds(targetDate, new Date()));
+    const now = new Date();
+    const targetUTC = new Date(targetDate);
+    
+    const totalSeconds = Math.max(0, differenceInSeconds(targetUTC, now));
     
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -37,8 +40,10 @@ export default function LaunchCountdown() {
   useEffect(() => {
     if (!nextLaunch?.launchDate) return;
 
+    const target = new Date(nextLaunch.launchDate);
+    setCountdown(calculateTimeLeft(target));
+
     const timer = setInterval(() => {
-      const target = new Date(nextLaunch.launchDate);
       setCountdown(calculateTimeLeft(target));
     }, 1000);
 
@@ -140,9 +145,9 @@ export default function LaunchCountdown() {
       </div>
 
       {/* Optional: Product name display */}
-      {nextLaunch?.productName && (
+      {nextLaunch?.name && (
         <div className="mt-4 text-sm text-gray-400 text-center">
-          Next up: <span className="text-white">{nextLaunch?.productName}</span>
+          Next up: <span className="text-white">{nextLaunch.name}</span>
         </div>
       )}
 

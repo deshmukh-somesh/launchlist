@@ -7,6 +7,22 @@ import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { observable } from '@trpc/server/observable';
 import { EventEmitter } from 'events';
 
+function getUTCDay() {
+  const now = new Date();
+  // Create UTC start of day
+  const utcStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  // Create UTC end of day
+  const utcEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+  
+  console.log({
+    currentUTC: now.toISOString(),
+    utcDayStart: utcStart.toISOString(),
+    utcDayEnd: utcEnd.toISOString()
+  });
+  
+  return { now, utcStart, utcEnd };
+}
+
 const voteEvents = new EventEmitter();
 
 const enrichProductWithVoteStatus = async (product: any, userId: string | null) => {
@@ -54,21 +70,19 @@ export const productRouter = router({
 
   // get upcoming products (launching later today)
   getUpcoming: publicProcedure.query(async ({ ctx }) => {
-    const now = new Date();
-    const todayStart = startOfDay(now);
-    const todayEnd = endOfDay(now);
-
+    const { now, utcStart, utcEnd } = getUTCDay();
+    
     const products = await db.product.findMany({
       where: {
         launchDate: {
-          gte: now, // Future time from now
-          lte: todayEnd // Until end of today
+          gte: utcStart,
+          lte: utcEnd
         },
-        isLaunched: true, // Product is scheduled to launch
+        isLaunched: true,
         AND: {
           OR: [
-            { launchStarted: false }, // New field to track actual launch
-            { launchDate: { gt: now } } // Not yet reached launch time
+            { launchStarted: false },
+            { launchDate: { gt: now } }
           ]
         }
       },
@@ -96,11 +110,9 @@ export const productRouter = router({
         }
       }
     });
-
-    // Enrich with vote status
-    return Promise.all(
-      products.map(product => enrichProductWithVoteStatus(product, ctx.userId))
-    );
+    
+    console.log('Found upcoming products:', products.length);
+    return products;
   }),
 
   // get yesterday's products
@@ -681,7 +693,7 @@ export const productRouter = router({
 
   // Get next launch time
   getNextLaunch: publicProcedure.query(async ({ ctx }) => {
-    const now = new Date();
+    const { now } = getUTCDay();
 
     const nextLaunch = await db.product.findFirst({
       where: {
@@ -694,7 +706,8 @@ export const productRouter = router({
         launchDate: 'asc'
       },
       select: {
-        launchDate: true
+        launchDate: true,
+        name: true // Optional: include name for display
       }
     });
 

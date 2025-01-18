@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     }
 
     const now = new Date();
+    console.log('Current UTC time:', now.toISOString());
     
     // Update launch status
     const result = await db.product.updateMany({
