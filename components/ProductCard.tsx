@@ -34,7 +34,7 @@ interface ProductCardProps {
         maker: {
             name: string | null;
             avatarUrl: string | null;
-            username: string | null; 
+            username: string | null;
         };
         _count?: {
             votes: number;
@@ -100,7 +100,7 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
     const handleVoteClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (!isAuthenticated) {
             const loginLink = document.querySelector('[data-kinde-login-link]') as HTMLElement;
             if (loginLink) {
@@ -108,7 +108,7 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
             }
             return;
         }
-        
+
         toggleVote.mutate({ productId: product.id });
     };
 
@@ -116,15 +116,24 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
 
     const getWinnerBadge = () => {
         if (variant !== 'winner' || !rank) return null;
-        
+
         const badges = {
-            1: '🥇 1st Place',
-            2: '🥈 2nd Place',
-            3: '🥉 3rd Place'
+            1: '🥇 #1',
+            2: '🥈 #2',
+            3: '🥉 #3'
         };
 
         return (
-            <div className="absolute -top-3 -right-3 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white px-3 py-1 rounded-full shadow-lg transform rotate-12">
+            <div className={cn(
+                "absolute -top-4 right-4", // Changed positioning
+                "px-3 py-1.5 rounded-full",
+                "font-medium text-sm",
+                "shadow-lg transform",
+                // Different styling per rank
+                rank === 1 && "bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white",
+                rank === 2 && "bg-gradient-to-r from-[#C0C0C0] to-[#A0A0A0] text-white",
+                rank === 3 && "bg-gradient-to-r from-[#CD7F32] to-[#A0522D] text-white"
+            )}>
                 {badges[rank as 1 | 2 | 3]}
             </div>
         );
@@ -144,150 +153,163 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
         }
     }, [commentData?.totalComments]);
 
+    const name = product.maker.name
+    console.log(name)
+
     return (
         <>
-            <div className="relative flex items-center space-x-6 p-6 rounded-lg transition-all duration-200 w-full max-w-6xl mx-auto border border-[#2A2B3C] bg-[#151725] hover:bg-[#1A1C2E] group">
+            <div className={cn(
+                "relative flex items-start gap-6",
+                "p-4 sm:p-5 rounded-xl",
+                "bg-[#151725] border border-[#2A2B3C]",
+                "hover:border-[#6E3AFF]/30 hover:bg-[#1A1C2E]",
+                "group transition-all duration-200",
+                "w-full max-w-4xl mx-auto"
+            )}>
                 {getWinnerBadge()}
-                
-                <div className="flex-shrink-0 w-32 h-32">
+
+                {/* Product Image */}
+                <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
                     {product.thumbnail ? (
-                        <Image
-                            src={product.thumbnail}
-                            alt={product.name}
-                            className="object-cover rounded-lg transition-transform group-hover:scale-105"
-                            sizes="(max-width: 768px) 100px, 128px"
-                            width={128}
-                            height={128}    
-                        />
+                        <div className="relative w-full h-full rounded-lg overflow-hidden">
+                            <Image
+                                src={product.thumbnail}
+                                alt={product.name}
+                                fill
+                                className="object-cover transition-transform duration-200 group-hover:scale-105"
+                                sizes="(max-width: 768px) 80px, 96px"
+                            />
+                        </div>
                     ) : (
-                        <div className="w-full h-full bg-[#1A1C2E] rounded-lg" />
+                        <div className="w-full h-full rounded-lg bg-[#1A1C2E] flex items-center justify-center">
+                            <Trophy className="w-8 h-8 text-[#2A2B3C]" />
+                        </div>
                     )}
                 </div>
 
-                <div className="flex-grow min-w-0 px-4">
-                    <div className="flex items-center justify-between space-x-2">
-                        <Link
-                            href={`/products/${product.slug}`}
-                            className="text-2xl font-semibold text-white hover:text-[#6E3AFF] transition-colors truncate"
-                        >
-                            {product.name}
-                        </Link>
-                    </div>
-
-                    <p className="text-gray-400 mt-2 text-lg">{product.tagline}</p>
-
-                    <div className="flex flex-wrap gap-2 mt-3">
-                        {product.categories.map((cat) => (
-                            <Badge
-                                key={cat.category.id}
-                                variant="outline"
-                                className="text-xs border-[#2A2B3C] bg-[#1A1C2E] text-gray-300"
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="min-w-0">
+                            <Link
+                                href={`/products/${product.slug}`}
+                                className="inline-block text-lg sm:text-xl font-semibold text-white hover:text-[#6E3AFF] transition-colors line-clamp-1"
                             >
-                                {cat.category.name}
-                            </Badge>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-2">
-                    <div className="mt-2 flex items-center gap-2">
-                        <div className="flex items-center justify-center flex-col gap-1">
-                            {isAuthenticated ? (
-                                <button 
-                                    onClick={handleVoteClick}
-                                    disabled={toggleVote.isPending}
-                                    className={`flex items-center justify-center flex-col hover:scale-110 transition-transform 
-                                        ${toggleVote.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                    <Heart 
-                                        className={`w-5 h-5 ${hasVoted ? 'fill-[#6E3AFF]' : ''} text-[#6E3AFF]`} 
-                                    />
-                                    <span className="text-gray-400">{optimisticVotes}</span>
-                                </button>
-                            ) : (
-                                <LoginLink 
-                                    className="flex items-center justify-center flex-col hover:scale-110 transition-transform cursor-pointer"
-                                >
-                                    <Heart className="w-5 h-5 text-[#6E3AFF]" />
-                                    <span className="text-gray-400">{optimisticVotes}</span>
-                                </LoginLink>
-                            )}
+                                {product.name}
+                            </Link>
+                            <p className="mt-1.5 text-gray-400 text-sm sm:text-base line-clamp-2">{product.tagline}</p>
                         </div>
 
-                        <div className="flex items-center justify-center flex-col gap-1">
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1 sm:gap-1">
+                            {isAuthenticated ? (
+                                <button
+                                    onClick={handleVoteClick}
+                                    disabled={toggleVote.isPending}
+                                    className={cn(
+                                        "flex flex-col items-center gap-1 py-1 px-2",
+                                        "rounded-lg hover:bg-[#2A2B3C]/50",
+                                        "transition-all duration-200",
+                                        toggleVote.isPending && "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    <Heart
+                                        className={cn(
+                                            "w-5 h-5 transition-colors",
+                                            hasVoted ? "fill-[#6E3AFF] text-[#6E3AFF]" : "text-gray-400"
+                                        )}
+                                    />
+                                    <span className="text-xs text-gray-400">{optimisticVotes}</span>
+                                </button>
+                            ) : (
+                                <LoginLink className="flex flex-col items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#2A2B3C]/50 transition-all duration-200">
+                                    <Heart className="w-5 h-5 text-gray-400" />
+                                    <span className="text-xs text-gray-400">{optimisticVotes}</span>
+                                </LoginLink>
+                            )}
+
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     setShowCommentDialog(true);
                                 }}
-                                className="flex items-center justify-center flex-col hover:scale-110 transition-transform cursor-pointer"
+                                className="flex flex-col items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#2A2B3C]/50 transition-all duration-200"
                             >
                                 <MessageCircle className="w-5 h-5 text-gray-400" />
-                                <span className="text-gray-400">
-                                    {commentCount}
-                                </span>
+                                <span className="text-xs text-gray-400">{commentCount}</span>
                             </button>
-                        </div>
 
-                        <div
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.open(product.website, '_blank', 'noopener,noreferrer');
-                            }}
-                            className="cursor-pointer text-gray-400 hover:text-[#6E3AFF] transition-colors flex-shrink-0 mb-6"
-                        >
-                            <ExternalLink className="w-5 h-5" />
+                            <a
+                                href={product.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 rounded-lg hover:bg-[#2A2B3C]/50 transition-all mb-5 duration-200"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <ExternalLink className="w-5 h-5 text-gray-400 hover:text-[#6E3AFF]" />
+                            </a>
                         </div>
                     </div>
 
-                    <div className="mt-4 flex items-center gap-2">
-                        <Avatar className={cn(
-                            "h-6 w-6",
-                            "border border-[#2A2B3C]"
-                        )}>
-                            {product.maker.avatarUrl ? (
-                                <AvatarImage
-                                    src={product.maker.avatarUrl}
-                                    alt={product.maker.name || ''}
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <AvatarFallback 
+                    {/* Categories and Maker Info */}
+                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex flex-wrap gap-2">
+                            {product.categories.map((cat) => (
+                                <Badge
+                                    key={cat.category.id}
+                                    variant="outline"
                                     className={cn(
-                                        "bg-[#1A1C2E]",
-                                        "text-[#6E3AFF]",
-                                        "font-medium"
+                                        "px-2 py-0.5 text-xs",
+                                        "border-[#2A2B3C] bg-[#1A1C2E]",
+                                        "text-gray-300 hover:text-white",
+                                        "transition-colors"
                                     )}
                                 >
-                                    {product.maker.name 
-                                        ? product.maker.name[0].toUpperCase() 
-                                        : product.maker.username ? product.maker.username[0].toUpperCase() : '?'}
-                                </AvatarFallback>
-                            )}
-                        </Avatar>
-                        <span className="text-sm text-gray-400">
-                            {product.maker.name || ''}
-                        </span>
+                                    {cat.category.name}
+                                </Badge>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6 border border-[#2A2B3C]">
+                                {product.maker.avatarUrl ? (
+                                    <AvatarImage
+                                        src={product.maker.avatarUrl}
+                                        alt={product.maker.name || ''}
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <AvatarFallback className="bg-[#1A1C2E] text-[#6E3AFF] text-xs font-medium">
+                                        {product.maker.name
+                                            ? product.maker.name[0].toUpperCase()
+                                            : product.maker.username ? product.maker.username[0].toUpperCase() : '?'}
+                                    </AvatarFallback>
+                                )}
+                            </Avatar>
+                            <span className="text-sm text-gray-400 hover:text-gray-300 transition-colors">
+                                {/* {product.maker.name || product.maker.username || 'Anonymous'} */}
+                                {product.maker.name}
+                                
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            {/* Comments Dialog */}
             <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-[#151725] border-[#2A2B3C]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-white">
                             <span>Comments on {product.name}</span>
-                            <span className="text-sm text-gray-400">
-                                ({commentCount})
-                            </span>
+                            <span className="text-sm text-gray-400">({commentCount})</span>
                         </DialogTitle>
                     </DialogHeader>
 
                     {isAuthenticated ? (
-                        <CommentSection 
-                            productId={product.id} 
+                        <CommentSection
+                            productId={product.id}
                             currentUser={{
                                 id: user?.id || '',
                                 email: user?.email || '',
@@ -297,9 +319,7 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
                         />
                     ) : (
                         <div className="text-center py-4">
-                            <p className="text-gray-400 mb-4">
-                                Please sign in to join the discussion
-                            </p>
+                            <p className="text-gray-400 mb-4">Please sign in to join the discussion</p>
                             <LoginLink className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#6E3AFF] text-white hover:bg-[#5B2FD9] transition-colors">
                                 Sign In
                             </LoginLink>

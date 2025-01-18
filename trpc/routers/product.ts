@@ -52,16 +52,25 @@ export const productRouter = router({
       });
     }),
 
-  // get upcoming products
+  // get upcoming products (launching later today)
   getUpcoming: publicProcedure.query(async ({ ctx }) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
     const products = await db.product.findMany({
       where: {
         launchDate: {
-          gt: today // Get products with launch dates after today
+          gte: now, // Future time from now
+          lte: todayEnd // Until end of today
         },
-        isLaunched: true
+        isLaunched: true, // Product is scheduled to launch
+        AND: {
+          OR: [
+            { launchStarted: false }, // New field to track actual launch
+            { launchDate: { gt: now } } // Not yet reached launch time
+          ]
+        }
       },
       orderBy: {
         launchDate: 'asc'
@@ -143,27 +152,27 @@ export const productRouter = router({
     });
   }),
 
-  // get todays winners
+  // get today's winners (already launched products)
   getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    // Get products launched today with most votes
     const winners = await db.product.findMany({
       where: {
         launchDate: {
-          gte: today,
-          lt: tomorrow
-        }
+          gte: todayStart,
+          lte: now // Only get products that should have launched by now
+        },
+        isLaunched: true,
+        launchStarted: true, // New field to track actual launch
       },
       orderBy: {
         votes: {
-          _count: 'desc' // Order by vote count descending
+          _count: 'desc'
         }
       },
-      take: 3, // Get top 3 winners
+      take: 3,
       include: {
         categories: {
           include: {
@@ -185,6 +194,7 @@ export const productRouter = router({
         }
       }
     });
+
     return winners;
   }),
   // Add this new procedure

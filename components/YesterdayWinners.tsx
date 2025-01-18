@@ -16,7 +16,7 @@ export default function YesterdayWinners() {
   });
 
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return <LoadingSkeleton variant="yesterday" />;
   }
 
   return (
@@ -49,12 +49,15 @@ export default function YesterdayWinners() {
                 className="w-full transform transition-all duration-300 hover:translate-y-[-2px]"
               >
                 {/* Wrapper with rank-based glow effect */}
-                <div className={cn(
-                  "relative rounded-xl overflow-hidden",
-                  index === 0 && "shadow-[0_0_30px_rgba(37,99,235,0.15)]",
-                  index === 1 && "shadow-[0_0_20px_rgba(37,99,235,0.1)]",
-                  index === 2 && "shadow-[0_0_10px_rgba(37,99,235,0.05)]"
-                )}>
+                <div 
+                // className={
+                //   cn(
+                //   "relative rounded-xl overflow-hidden",
+                //   index === 0 && "shadow-[0_0_10px_rgba(37,99,235,0.15)]",
+                //   index === 1 && "shadow-[0_0_20px_rgba(37,99,235,0.1)]",
+                //   index === 2 && "shadow-[0_0_10px_rgba(37,99,235,0.05)]"
+                // )}
+                >
                   <ProductCard 
                     product={{
                       ...product,
@@ -78,7 +81,7 @@ export default function YesterdayWinners() {
                   />
 
                   {/* Rank indicator - optional enhancement */}
-                  {index < 3 && (
+                  {/* {index < 3 && (
                     <div className={cn(
                       "absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                       index === 0 && "bg-[#2563EB]/20 text-[#2563EB]",
@@ -87,7 +90,7 @@ export default function YesterdayWinners() {
                     )}>
                       #{index + 1}
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             ))}

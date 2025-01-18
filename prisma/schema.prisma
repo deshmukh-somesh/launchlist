@@ -35,19 +35,20 @@ model User {
 }
 
 model Product {
-  id          String         @id @default(cuid())
-  name        String
-  slug        String         @unique
-  tagline     String
-  description String
-  website     String
-  thumbnail   String?
-  images      ProductImage[]
-  pricing     PricingType    @default(FREE)
-  launchDate  DateTime
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  isLaunched  Boolean        @default(false)
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  tagline       String
+  description   String
+  website       String
+  thumbnail     String?
+  images        ProductImage[]
+  pricing       PricingType    @default(FREE)
+  launchDate    DateTime
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  isLaunched    Boolean        @default(false)
+  launchStarted Boolean        @default(false)
 
   // Relations
   maker       User                    @relation(fields: [makerId], references: [id])

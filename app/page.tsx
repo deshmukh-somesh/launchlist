@@ -10,8 +10,13 @@ import UpcomingLaunches from "@/components/UpcomingLaunches";
 import TodaysWinners from "@/components/TodaysWinners";
 import YesterdayWinners from "@/components/YesterdayWinners";
 import PastLaunches from "@/components/PastLaunches";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { useRouter } from 'next/navigation';
+import { LoginLink,useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 export default function Home() {
+  const { isAuthenticated } = useKindeBrowserClient();
+  const router = useRouter();
   const utils = trpc.useContext();
   const { data: stats, isLoading: isStatsLoading } = trpc.user.getPlatformStats.useQuery();
   
@@ -98,15 +103,26 @@ export default function Home() {
 
         {/* CTA Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            className={buttonVariants({
-              size: 'lg',
-              className: 'bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-white hover:from-[#5B2FD9] hover:to-[#1E4FBE]',
-            })}
-            href="/dashboard"
-          >
-            Launch Your Product <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              className={buttonVariants({
+                size: 'lg',
+                className: 'bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-white hover:from-[#5B2FD9] hover:to-[#1E4FBE]',
+              })}
+              href="/dashboard"
+            >
+              Launch Your Product <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          ) : (
+            <LoginLink 
+              className={buttonVariants({
+                size: 'lg',
+                className: 'bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-white hover:from-[#5B2FD9] hover:to-[#1E4FBE]',
+              })}
+            >
+              Launch Your Product <ArrowRight className="ml-2 h-5 w-5" />
+            </LoginLink>
+          )}
           <Link
             className={buttonVariants({
               size: 'lg',

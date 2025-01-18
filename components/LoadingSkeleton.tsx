@@ -1,57 +1,87 @@
 import { Card, CardContent } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 
-export default function LoadingSkeleton() {
+interface LoadingSkeletonProps {
+  variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
+}
+
+export default function LoadingSkeleton({ variant = 'default' }: LoadingSkeletonProps) {
+  const getTitle = () => {
+    switch (variant) {
+      case 'upcoming':
+        return "Launching Today";
+      case 'winner':
+        return "Today's Winners";
+      case 'yesterday':
+        return "Yesterday's Winners";
+      default:
+        return "Past Launches";
+    }
+  };
+
   return (
     <div className="py-12 relative">
-      {/* Matching gradient background from UpcomingLaunches */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 relative">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          {/* Title skeleton with gradient beneath */}
           <div className="space-y-1">
-            <Skeleton className="h-10 w-64 bg-[#1E1F2E]" />
-            <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF]/20 to-[#2563EB]/20 rounded-full" />
+            <h2 className="text-3xl font-bold text-white">
+              {getTitle()}
+            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-gray-400 text-sm">Vote for the product that you like the most!</span>
+              <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] rounded-full" />
+            </div>
           </div>
         </div>
 
+        {/* Product Cards */}
         <div className="space-y-6">
           {Array(3).fill(0).map((_, i) => (
             <div 
               key={i} 
-              className="max-w-7xl mx-5"
+              className="relative flex items-start gap-6 p-4 sm:p-5 rounded-xl bg-[#151725] border border-[#2A2B3C] w-full max-w-4xl mx-auto"
             >
-              <Card className="bg-[#151725] border border-[#2A2B3C] hover:border-[#6E3AFF]/50 transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row gap-6">
-                    {/* Image skeleton with subtle gradient */}
-                    <Skeleton className="h-[200px] w-full md:w-[300px] rounded-lg bg-[#1E1F2E] relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#2A2B3C]/10 to-transparent animate-shimmer" />
-                    </Skeleton>
-                    
-                    <div className="flex-1 space-y-4">
-                      {/* Title and tagline */}
-                      <div className="space-y-2">
-                        <Skeleton className="h-6 w-3/4 bg-[#1E1F2E]" />
-                        <Skeleton className="h-4 w-1/2 bg-[#1E1F2E]" />
-                      </div>
+              {/* Product Image */}
+              <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
+                <Skeleton className="w-full h-full rounded-lg bg-[#1A1C2E]" />
+              </div>
 
-                      {/* Categories */}
-                      <div className="flex gap-2">
-                        <Skeleton className="h-6 w-20 bg-[#1E1F2E]" />
-                        <Skeleton className="h-6 w-20 bg-[#1E1F2E]" />
-                      </div>
-
-                      {/* Launch date and stats */}
-                      <div className="flex items-center gap-4">
-                        <Skeleton className="h-4 w-32 bg-[#1E1F2E]" />
-                        <Skeleton className="h-4 w-20 bg-[#1E1F2E]" />
-                      </div>
-                    </div>
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {/* Title and Actions Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="min-w-0">
+                    <Skeleton className="h-6 w-48 mb-2 bg-[#1A1C2E]" /> {/* Title */}
+                    <Skeleton className="h-4 w-96 bg-[#1A1C2E]" /> {/* Tagline */}
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1 sm:gap-1">
+                    <Skeleton className="w-12 h-12 rounded-lg bg-[#1A1C2E]" />
+                    <Skeleton className="w-12 h-12 rounded-lg bg-[#1A1C2E]" />
+                    <Skeleton className="w-12 h-12 rounded-lg bg-[#1A1C2E]" />
+                  </div>
+                </div>
+
+                {/* Categories and Maker Info */}
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  {/* Categories */}
+                  <div className="flex flex-wrap gap-2">
+                    <Skeleton className="h-6 w-20 rounded-full bg-[#1A1C2E]" />
+                    <Skeleton className="h-6 w-20 rounded-full bg-[#1A1C2E]" />
+                    <Skeleton className="h-6 w-20 rounded-full bg-[#1A1C2E]" />
+                  </div>
+
+                  {/* Maker Info */}
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-full bg-[#1A1C2E]" />
+                    <Skeleton className="h-4 w-24 bg-[#1A1C2E]" />
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>

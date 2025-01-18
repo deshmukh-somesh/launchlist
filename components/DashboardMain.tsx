@@ -357,7 +357,7 @@ export default function DashboardMain() {
       </Tabs>
 
       {/* Add the Dialog for viewing product details */}
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+      {/* <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="max-w-2xl min-h-[400px]">
           <DialogHeader>
             <DialogTitle>Product Details</DialogTitle>
@@ -413,6 +413,114 @@ export default function DashboardMain() {
                   {format(new Date(productDetails.launchDate), 'PPP')}
                 </div>
               </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog> */}
+
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-2xl bg-[#1A1C2E] border border-[#2A2B3C] text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold leading-2 text-gray-200">
+              Product Details
+            </DialogTitle>
+          </DialogHeader>
+
+          {isDetailsLoading ? (
+            <div className="h-72 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-[#6E3AFF]" />
+            </div>
+          ) : productDetails ? (
+            <div className="mt-6">
+              <dl className="divide-y divide-[#2A2B3C]">
+                {/* Name */}
+                <div className="py-4">
+                  <dt className="text-sm font-medium leading-6 text-gray-200">
+                    Name
+                  </dt>
+                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
+                    {productDetails.name}
+                  </dd>
+                </div>
+
+                {/* Tagline */}
+                <div className="py-4">
+                  <dt className="text-sm font-medium leading-6 text-gray-200">
+                    Tagline
+                  </dt>
+                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
+                    {productDetails.tagline}
+                  </dd>
+                </div>
+
+                {/* Description */}
+                <div className="py-4">
+                  <dt className="text-sm font-medium leading-6 text-gray-200">
+                    Description
+                  </dt>
+                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C] whitespace-pre-wrap">
+                    {productDetails.description}
+                  </dd>
+                </div>
+
+                {/* Website */}
+                <div className="py-4">
+                  <dt className="text-sm font-medium leading-6 text-gray-200">
+                    Website
+                  </dt>
+                  <dd className="mt-2 text-sm bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
+                    <a
+                      href={productDetails.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#6E3AFF] hover:text-[#6E3AFF]/80 hover:underline"
+                    >
+                      {productDetails.website}
+                    </a>
+                  </dd>
+                </div>
+
+                {/* Pricing */}
+                <div className="py-4">
+                  <dt className="text-sm font-medium leading-6 text-gray-200">
+                    Pricing
+                  </dt>
+                  <dd className="mt-2 text-sm bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#6E3AFF]/20 text-[#6E3AFF]">
+                      {productDetails.pricing}
+                    </span>
+                  </dd>
+                </div>
+
+                {/* Launch Date */}
+                <div className="py-4">
+                  <dt className="text-sm font-medium leading-6 text-gray-200">
+                    Launch Date
+                  </dt>
+                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
+                    {format(new Date(productDetails.launchDate), 'PPP')}
+                  </dd>
+                </div>
+              </dl>
+
+              {/* Footer Actions */}
+              {/* <div className="mt-6 flex items-center justify-end gap-3 pt-6 border-t border-[#2A2B3C]">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewModalOpen(false)}
+                  className="bg-[#151725] text-white border-[#2A2B3C] hover:bg-[#2A2B3C]"
+                >
+                  Close
+                </Button>
+                <Link href={`/products/${productDetails.slug}`}>
+                  <Button
+                    variant="default"
+                    className="bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-white hover:opacity-90"
+                  >
+                    View Live
+                  </Button>
+                </Link>
+              </div> */}
             </div>
           ) : null}
         </DialogContent>

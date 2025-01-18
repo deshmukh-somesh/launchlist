@@ -15,7 +15,7 @@
 
 // export default function UpcomingLaunches() {
 //   const [countdown, setCountdown] = useState<CountdownTime>({ hours: 0, minutes: 0, seconds: 0 });
-  
+
 //   const { data: products } = trpc.product.getUpcoming.useQuery(
 //     undefined,
 //     {
@@ -34,7 +34,7 @@
 //   // Calculate countdown values
 //   const calculateTimeLeft = (targetDate: Date): CountdownTime => {
 //     const totalSeconds = Math.max(0, differenceInSeconds(targetDate, new Date()));
-    
+
 //     const hours = Math.floor(totalSeconds / 3600);
 //     const minutes = Math.floor((totalSeconds % 3600) / 60);
 //     const seconds = totalSeconds % 60;
@@ -103,18 +103,21 @@
 import { trpc } from "@/app/_trpc/client";
 import ProductCard from "./ProductCard";
 import LoadingSkeleton from "./LoadingSkeleton";
+import {
+  Rocket
+} from "lucide-react";
 
 export default function UpcomingLaunches() {
   const { data: products, isLoading } = trpc.product.getUpcoming.useQuery(
     undefined,
-    {
+    { 
       refetchInterval: 30000,
       refetchOnWindowFocus: true,
     }
   );
 
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return <LoadingSkeleton variant="upcoming" />;
   }
 
   const upcomingLaunches = products?.sort((a, b) =>
@@ -127,20 +130,27 @@ export default function UpcomingLaunches() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 relative">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center max-w-4xl mx-auto justify-between mb-9">
           <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-white">
-              Launching Today
+            <div className="flex items-center gap-3 mb-3">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-[#6E3AFF] rounded-full blur opacity-30 animate-pulse" />
+              <Rocket className="h-8 w-8 text-[#6E3AFF] relative" />
+            </div>
+              <h2 className="text-3xl font-bold text-white">
+                Launching Today
             </h2>
-            <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] rounded-full" />
+            </div>
+            {/* <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] rounded-full" /> */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2"><span className="text-gray-400 text-sm">Vote for the product that you like the most!</span><div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] rounded-full"></div></div>
           </div>
         </div>
 
         {upcomingLaunches.length > 0 ? (
           <div className="space-y-6">
             {upcomingLaunches.map((product) => (
-              <div 
-                key={product.id} 
+              <div
+                key={product.id}
                 className="max-w-7xl mx-5 transform transition-all duration-300 hover:translate-y-[-2px]"
               >
                 <ProductCard

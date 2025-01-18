@@ -15,7 +15,7 @@ export default function TodaysWinners() {
   });
 
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return <LoadingSkeleton variant="winner" />;
   }
 
   return (
@@ -48,12 +48,14 @@ export default function TodaysWinners() {
                 className="w-full transform transition-all duration-300 hover:translate-y-[-2px]"
               >
                 {/* Wrapper with rank-based glow effect */}
-                <div className={cn(
-                  "relative rounded-xl overflow-hidden",
-                  index === 0 && "shadow-[0_0_30px_rgba(110,58,255,0.15)]",
-                  index === 1 && "shadow-[0_0_20px_rgba(110,58,255,0.1)]",
-                  index === 2 && "shadow-[0_0_10px_rgba(110,58,255,0.05)]"
-                )}>
+                <div 
+                // className={cn(
+                //   "relative rounded-xl overflow-hidden",
+                //   index === 0 && "shadow-[0_0_30px_rgba(110,58,255,0.15)]",
+                //   index === 1 && "shadow-[0_0_20px_rgba(110,58,255,0.1)]",
+                //   index === 2 && "shadow-[0_0_10px_rgba(110,58,255,0.05)]"
+                // )}
+                >
                   <ProductCard 
                     product={{
                       ...product,

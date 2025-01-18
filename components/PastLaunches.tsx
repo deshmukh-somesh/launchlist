@@ -32,7 +32,7 @@ export default function PastLaunches() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (isLoading) return <LoadingSkeleton />;
+  if (isLoading) return <LoadingSkeleton variant="default" />;
 
   return (
     <div className="py-12 relative">
@@ -46,7 +46,7 @@ export default function PastLaunches() {
             <History className="h-8 w-8 text-[#6E3AFF]" />
             <h2 className="text-3xl font-bold text-white">Past Launches</h2>
           </div>
-          
+
           {/* Subtitle with improved contrast */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <span className="text-gray-400 text-sm">
@@ -55,11 +55,11 @@ export default function PastLaunches() {
             <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-transparent rounded-full" />
           </div>
         </div>
-        
+
         <div className="space-y-6">
           {data?.pages.map((page, pageIndex) =>
             page.items.map((product, productIndex) => (
-              <div 
+              <div
                 key={product.id}
                 className={cn(
                   "w-full transform transition-all duration-500",
@@ -89,8 +89,8 @@ export default function PastLaunches() {
         </div>
 
         {/* Infinite scroll loader */}
-        <div 
-          ref={ref} 
+        <div
+          ref={ref}
           className={cn(
             "mt-8 flex justify-center",
             isFetchingNextPage ? "opacity-100" : "opacity-0",

@@ -17,6 +17,7 @@ export type ProductFormInputs = {
   website: string;
   pricing: 'FREE' | 'PAID' | 'SUBSCRIPTION';
   launchDate: string;
+  launchTime: string; // new field for time
   isLaunched: boolean;
   thumbnail: string | null;
 };
@@ -35,6 +36,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
+  const defaultTime = "09:00"; // Default to 9AM
 
   const {
     register,
@@ -46,6 +48,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
     defaultValues: initialData || {
       pricing: 'FREE',
       launchDate: minDate,
+      launchTime: defaultTime, // add default time
       thumbnail: null,
       name: '',
       slug: '',
@@ -75,10 +78,47 @@ export default function ProductForm({ initialData, productId, isEditing = false,
 
   const utils = trpc.useContext();
   const updateProduct = trpc.product.update.useMutation({
-    // ... [mutation logic remains unchanged]
+    onSuccess: async () => {
+      toast({
+        title: 'Product updated successfully!',
+        variant: 'default',
+      });
+      //   Invalidate both queries
+      await Promise.all([
+        utils.product.getDashboardProducts.invalidate(),
+        utils.product.getProductById.invalidate({ id: productId as string })
+      ])
+      router.push('/dashboard');
+      router.refresh();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error updating product',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+    }
+
   });
   const createProduct = trpc.product.create.useMutation({
-    // ... [mutation logic remains unchanged]
+    onSuccess: async () => {
+      toast({
+        title: 'Product created successfully!',
+        variant: 'default',
+      });
+      //   Invalidate the dashboard products query
+      await utils.product.getDashboardProducts.invalidate();
+      router.push('/dashboard');
+      router.refresh();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error creating product',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   });
 
   // Validation functions [unchanged]
@@ -99,7 +139,59 @@ export default function ProductForm({ initialData, productId, isEditing = false,
   };
 
   const onSubmit = async (data: ProductFormInputs) => {
-    // ... [submission logic remains unchanged]
+    setIsSubmitting(true);
+    try {
+      const [year, month, day] = data.launchDate.split('-');
+      const [hours, minutes] = data.launchTime.split(':');
+
+      const launchDateTime = new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes)
+      );
+
+      // Format the date maintaining the local time
+    const formattedDate = launchDateTime.getFullYear() + '-' +
+    String(launchDateTime.getMonth() + 1).padStart(2, '0') + '-' +
+    String(launchDateTime.getDate()).padStart(2, '0') + ' ' +
+    String(launchDateTime.getHours()).padStart(2, '0') + ':' +
+    String(launchDateTime.getMinutes()).padStart(2, '0') + ':00';
+
+      // Add timezone offset to ensure correct UTC time
+      // const offset = launchDateTime.getTimezoneOffset();
+      // launchDateTime.setMinutes(launchDateTime.getMinutes() - offset);
+
+      if (isEditing && productId) {
+        await updateProduct.mutateAsync({
+          id: productId,
+          ...data,
+          // launchDate: launchDateTime.toISOString().slice(0, 19).replace('T', ' '),
+          launchDate: formattedDate,
+          categoryIds: [],
+          images: []
+        });
+      } else {
+        await createProduct.mutateAsync({
+          ...data,
+          // launchDate: launchDateTime.toISOString().slice(0, 19).replace('T', ' '),
+          launchDate: formattedDate,
+          categoryIds: [],
+          images: [],
+          isLaunched: false
+        });
+      }
+    } catch (error) {
+      console.error('Error updating/creating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save product. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClasses = cn(
@@ -224,8 +316,8 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         </div>
 
         {/* Launch Date Field */}
-        <div>
-          <label className={labelClasses}>Launch Date</label>
+        {/* <div>
+          <label className={labelClasses}>Launch Date and Time</label>
           <input
             type="date"
             {...register("launchDate", {
@@ -245,6 +337,36 @@ export default function ProductForm({ initialData, productId, isEditing = false,
           />
           {errors.launchDate && (
             <p className={errorClasses}>{errors.launchDate.message}</p>
+          )}
+        </div> */}
+
+
+        {/* Launch Date and Time */}
+        <div>
+          <label className={labelClasses}>Launch Date and Time</label>
+          <div className="flex gap-2">
+            <input
+              type="date"
+              {...register("launchDate", {
+                required: "Launch date is required",
+              })}
+              className={cn(inputClasses, "flex-1")}
+              disabled={readonly}
+            />
+            <input
+              type="time"
+              {...register("launchTime", {
+                required: "Launch time is required"
+              })}
+              className={cn(inputClasses, "w-32")}
+              disabled={readonly}
+            />
+          </div>
+          {errors.launchDate && (
+            <p className={errorClasses}>{errors.launchDate.message}</p>
+          )}
+          {errors.launchTime && (
+            <p className={errorClasses}>{errors.launchTime.message}</p>
           )}
         </div>
 
