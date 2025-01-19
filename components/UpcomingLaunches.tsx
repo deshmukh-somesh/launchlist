@@ -196,9 +196,10 @@ export default function UpcomingLaunches() {
               <div className={cn(
                 "h-1 w-20 bg-gradient-to-r rounded-full",
                 isVotingClosed() 
-                  ? "from-[#FFD700] to-[#FFA500]"
-                  : "from-[#6E3AFF] to-[#2563EB]"
+                  ? "from-[#FFD700] to-transparent"
+                  : "from-[#6E3AFF] to-transparent"
               )} />
+              
             </div>
           </div>
         </div>

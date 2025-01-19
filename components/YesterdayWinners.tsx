@@ -42,7 +42,7 @@ export default function YesterdayWinners() {
             <span className="text-gray-400 text-sm">
               Top voted products from yesterday
             </span>
-            <div className="h-1 w-20 bg-gradient-to-r from-[#2563EB] to-[#6E3AFF] rounded-full" />
+            <div className="h-1 w-20 bg-gradient-to-r from-[#6E3AFF] to-transparent rounded-full" />
           </div>
         </div>
 
