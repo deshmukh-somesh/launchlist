@@ -15,19 +15,19 @@ interface CountdownTime {
 interface NextLaunch {
   name: string;
   launchDate: string;
+  isVotingEnd: boolean;
 }
 
 export default function LaunchCountdown() {
   const [countdown, setCountdown] = useState<CountdownTime>({ hours: 0, minutes: 0, seconds: 0 });
   
   const { data: nextLaunch, isLoading } = trpc.product.getNextLaunch.useQuery(undefined, {
-    refetchInterval: 60000,
+    refetchInterval: 60000, // Refresh every minute
   });
 
   const calculateTimeLeft = (targetDate: Date): CountdownTime => {
     const now = new Date();
     const targetUTC = new Date(targetDate);
-    
     const totalSeconds = Math.max(0, differenceInSeconds(targetUTC, now));
     
     const hours = Math.floor(totalSeconds / 3600);
@@ -97,7 +97,7 @@ export default function LaunchCountdown() {
       "hover:border-[#6E3AFF]/30 transition-colors"
     )}>
       <div className="text-lg font-medium text-white mb-2">
-        Next Launch In
+        {nextLaunch?.isVotingEnd ? "Next Day Starts In" : "Voting Ends In"}
       </div>
       
       <div className="flex items-center gap-4">
@@ -144,14 +144,13 @@ export default function LaunchCountdown() {
         </div>
       </div>
 
-      {/* Optional: Product name display */}
       {nextLaunch?.name && (
         <div className="mt-4 text-sm text-gray-400 text-center">
-          Next up: <span className="text-white">{nextLaunch.name}</span>
+          {nextLaunch.isVotingEnd ? "Next:" : "Currently voting:"}{" "}
+          <span className="text-white">{nextLaunch.name}</span>
         </div>
       )}
 
-      {/* Animated progress bar */}
       <div className="w-full h-1 bg-[#2A2B3C] rounded-full mt-4 overflow-hidden">
         <div 
           className={cn(

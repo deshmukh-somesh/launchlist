@@ -86,6 +86,8 @@ export default function PastLaunches() {
                     }
                   }}
                   variant="default"
+                  showVoting={true}
+                  disableVoting={true}
                 />
               </div>
             ))

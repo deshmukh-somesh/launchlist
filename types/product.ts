@@ -23,4 +23,11 @@ export interface Product {
     votes: number;
     comments: number;
   };
+  rank?: number;
+  isTied?: boolean | null;
+}
+
+export interface WinnerProduct extends Product {
+  rank: number;
+  isTied: boolean | null;
 } 

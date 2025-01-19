@@ -160,9 +160,9 @@ export default function Home() {
         </section>
 
         {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
-          <section>
+          {/* <section>
           <TodaysWinners />
-        </section>
+        </section> */}
 
         {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
         <section>

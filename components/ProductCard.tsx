@@ -45,12 +45,14 @@ interface ProductCardProps {
     variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
     rank?: number;
     isTied?: boolean;
+    showVoting?: boolean;
+    disableVoting?: boolean;
 }
 
 const voteQueue = new Set<string>();
 let isProcessingQueue = false;
 
-export default function ProductCard({ product, variant = 'default', rank, isTied }: ProductCardProps) {
+export default function ProductCard({ product, variant = 'default', rank, isTied, showVoting, disableVoting }: ProductCardProps) {
     const utils = trpc.useContext();
     const [optimisticVotes, setOptimisticVotes] = useState(product._count?.votes || 0);
     const [hasVoted, setHasVoted] = useState(product.hasVoted || false);
@@ -202,30 +204,38 @@ export default function ProductCard({ product, variant = 'default', rank, isTied
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-1 sm:gap-1">
-                            {isAuthenticated ? (
-                                <button
-                                    onClick={handleVoteClick}
-                                    disabled={toggleVote.isPending}
-                                    className={cn(
-                                        "flex flex-col items-center gap-1 py-1 px-2",
-                                        "rounded-lg hover:bg-[#2A2B3C]/50",
-                                        "transition-all duration-200",
-                                        toggleVote.isPending && "opacity-50 cursor-not-allowed"
-                                    )}
-                                >
-                                    <Heart
+                            {showVoting && (
+                                isAuthenticated ? (
+                                    <button
+                                        onClick={handleVoteClick}
+                                        disabled={toggleVote.isPending || disableVoting}
                                         className={cn(
-                                            "w-5 h-5 transition-colors",
-                                            hasVoted ? "fill-[#6E3AFF] text-[#6E3AFF]" : "text-gray-400"
+                                            "flex flex-col items-center gap-1 py-1 px-2",
+                                            "rounded-lg transition-all duration-200",
+                                            disableVoting 
+                                                ? "opacity-50 cursor-not-allowed" 
+                                                : "hover:bg-[#2A2B3C]/50"
                                         )}
-                                    />
-                                    <span className="text-xs text-gray-400">{optimisticVotes}</span>
-                                </button>
-                            ) : (
-                                <LoginLink className="flex flex-col items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#2A2B3C]/50 transition-all duration-200">
-                                    <Heart className="w-5 h-5 text-gray-400" />
-                                    <span className="text-xs text-gray-400">{optimisticVotes}</span>
-                                </LoginLink>
+                                    >
+                                        <Heart 
+                                            className={cn(
+                                                "w-5 h-5",
+                                                hasVoted ? "fill-[#6E3AFF] text-[#6E3AFF]" : "text-gray-400"
+                                            )} 
+                                        />
+                                        <span className={cn(
+                                            "text-xs",
+                                            hasVoted ? "text-[#6E3AFF]" : "text-gray-400"
+                                        )}>
+                                            {optimisticVotes}
+                                        </span>
+                                    </button>
+                                ) : (
+                                    <LoginLink className="flex flex-col items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#2A2B3C]/50 transition-all duration-200">
+                                        <Heart className="w-5 h-5 text-gray-400" />
+                                        <span className="text-xs text-gray-400">{optimisticVotes}</span>
+                                    </LoginLink>
+                                )
                             )}
 
                             <button

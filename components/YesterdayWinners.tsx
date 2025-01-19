@@ -6,7 +6,7 @@ import ProductCard from "./ProductCard";
 import { keepPreviousData } from "@tanstack/react-query";
 import { Award } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Product } from "@/types/product";
+import type { WinnerProduct, Product } from "@/types/product";
 
 export default function YesterdayWinners() {
   const { data: products, isLoading } = trpc.product.getYesterdayWinners.useQuery(undefined, {
@@ -82,7 +82,10 @@ export default function YesterdayWinners() {
                       }
                     }}
                     variant="winner"
-                    rank={index + 1}
+                    rank={product.rank}
+                    isTied={product.isTied ?? false}
+                    showVoting={true}
+                    disableVoting={true}
                   />
 
                   {/* Rank indicator - optional enhancement */}
