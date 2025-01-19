@@ -154,19 +154,23 @@ export default function Home() {
 
       {/* Product Sections */}
       <div className="max-w-[1400px] mx-auto px-4 space-y-16">
-        <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg">
+        {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
+        <section>
           <UpcomingLaunches />
         </section>
 
-        <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg">
+        {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
+          <section>
           <TodaysWinners />
         </section>
 
-        <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg">
+        {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
+        <section>
           <YesterdayWinners />
         </section>
 
-        <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg">
+        {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
+        <section>
           <PastLaunches />
         </section>
       </div>

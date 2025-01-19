@@ -22,16 +22,21 @@ export default function YesterdayWinners() {
   return (
     <div className="py-12 relative">
       {/* Gradient background with slightly different color */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#2563EB]/10 to-transparent pointer-events-none" />
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-[#2563EB]/10 to-transparent pointer-events-none" /> */}
+      <div className="absolute" />
 
       <div className="max-w-7xl mx-auto px-4 relative">
-        <div className="mb-8">
+        <div className="mb-8 max-w-4xl mx-auto">
           {/* Title section with award icon and gradient underline */}
           <div className="flex items-center gap-3 mb-2">
-            <Award className="h-8 w-8 text-[#C0C0C0]" /> {/* Silver color for yesterday's winners */}
+            {/* <Award className="h-8 w-8 text-[#C0C0C0]" /> Silver color for yesterday's winners */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gray-400 rounded-full blur opacity-30 animate-pulse" />
+              <Award className="h-8 w-8 text-gray-400 relative" />
+            </div>
             <h2 className="text-3xl font-bold text-white">Yesterday's Winners</h2>
           </div>
-          
+
           {/* Subtitle with improved contrast */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <span className="text-gray-400 text-sm">
@@ -40,16 +45,16 @@ export default function YesterdayWinners() {
             <div className="h-1 w-20 bg-gradient-to-r from-[#2563EB] to-[#6E3AFF] rounded-full" />
           </div>
         </div>
-        
+
         {products && products.length > 0 ? (
           <div className="space-y-6">
             {products.map((product: Product, index) => (
-              <div 
-                key={product.id} 
+              <div
+                key={product.id}
                 className="w-full transform transition-all duration-300 hover:translate-y-[-2px]"
               >
                 {/* Wrapper with rank-based glow effect */}
-                <div 
+                <div
                 // className={
                 //   cn(
                 //   "relative rounded-xl overflow-hidden",
@@ -58,7 +63,7 @@ export default function YesterdayWinners() {
                 //   index === 2 && "shadow-[0_0_10px_rgba(37,99,235,0.05)]"
                 // )}
                 >
-                  <ProductCard 
+                  <ProductCard
                     product={{
                       ...product,
                       createdAt: new Date(product.createdAt),

@@ -37,13 +37,17 @@ export default function PastLaunches() {
   return (
     <div className="py-12 relative">
       {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#151725]/50 to-transparent pointer-events-none" />
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-[#151725]/50 to-transparent pointer-events-none" /> */}
+      <div className="absolute" />
 
       <div className="max-w-7xl mx-auto px-4 relative">
-        <div className="mb-8">
+        <div className="mb-8 max-w-4xl mx-auto">
           {/* Title section with history icon and gradient underline */}
           <div className="flex items-center gap-3 mb-2">
-            <History className="h-8 w-8 text-[#6E3AFF]" />
+          <div className="relative">
+          <div className="absolute -inset-1 bg-[#6E3AFF] rounded-full blur opacity-30 animate-pulse" />
+            <History className="h-8 w-8 text-[#6E3AFF] relative" />
+            </div>
             <h2 className="text-3xl font-bold text-white">Past Launches</h2>
           </div>
 

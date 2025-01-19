@@ -23,8 +23,8 @@ export default function DashboardLayout({
         {/* Main content with proper spacing and background effects */}
         <main className="relative pt-[64px] min-h-screen"> {/* Adjust pt based on your nav height */}
           {/* Gradient background effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
-          
+          {/* <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" /> */}
+          <div className="absolute" /> 
           {/* Content container */}
           <div className="relative p-8 max-w-7xl mx-auto">
             {/* Subtle grid pattern overlay */}

@@ -39,17 +39,18 @@ interface ProductCardProps {
         _count?: {
             votes: number;
             comments: number;
-        };
+        }
         hasVoted?: boolean;
     };
     variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
     rank?: number;
+    isTied?: boolean;
 }
 
 const voteQueue = new Set<string>();
 let isProcessingQueue = false;
 
-export default function ProductCard({ product, variant = 'default', rank }: ProductCardProps) {
+export default function ProductCard({ product, variant = 'default', rank, isTied }: ProductCardProps) {
     const utils = trpc.useContext();
     const [optimisticVotes, setOptimisticVotes] = useState(product._count?.votes || 0);
     const [hasVoted, setHasVoted] = useState(product.hasVoted || false);
@@ -118,18 +119,17 @@ export default function ProductCard({ product, variant = 'default', rank }: Prod
         if (variant !== 'winner' || !rank) return null;
 
         const badges = {
-            1: '🥇 #1',
-            2: '🥈 #2',
-            3: '🥉 #3'
+            1: isTied ? '🏆 Tied #1' : '🥇 #1',
+            2: isTied ? '🏆 Tied #2' : '🥈 #2',
+            3: isTied ? '🏆 Tied #3' : '🥉 #3'
         };
 
         return (
             <div className={cn(
-                "absolute -top-4 right-4", // Changed positioning
+                "absolute -top-4 right-4",
                 "px-3 py-1.5 rounded-full",
                 "font-medium text-sm",
                 "shadow-lg transform",
-                // Different styling per rank
                 rank === 1 && "bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white",
                 rank === 2 && "bg-gradient-to-r from-[#C0C0C0] to-[#A0A0A0] text-white",
                 rank === 3 && "bg-gradient-to-r from-[#CD7F32] to-[#A0522D] text-white"

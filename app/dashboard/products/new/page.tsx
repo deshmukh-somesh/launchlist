@@ -7,8 +7,8 @@ export default function NewProductPage() {
   return (
     <div className="p-6 min-h-[calc(100vh-4rem)] bg-[#0A0B14] animate-fade-in-up">
       {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
-
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" /> */}
+      <div className="absolute" />
       <div className="max-w-4xl mx-auto relative">
         {/* Navigation */}
         <div className="flex items-center gap-2 mb-6">

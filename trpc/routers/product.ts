@@ -13,13 +13,13 @@ function getUTCDay() {
   const utcStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
   // Create UTC end of day
   const utcEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-  
+
   console.log({
     currentUTC: now.toISOString(),
     utcDayStart: utcStart.toISOString(),
     utcDayEnd: utcEnd.toISOString()
   });
-  
+
   return { now, utcStart, utcEnd };
 }
 
@@ -71,7 +71,7 @@ export const productRouter = router({
   // get upcoming products (launching later today)
   getUpcoming: publicProcedure.query(async ({ ctx }) => {
     const { now, utcStart, utcEnd } = getUTCDay();
-    
+
     const products = await db.product.findMany({
       where: {
         launchDate: {
@@ -110,7 +110,7 @@ export const productRouter = router({
         }
       }
     });
-    
+
     console.log('Found upcoming products:', products.length);
     return products;
   }),
@@ -164,7 +164,81 @@ export const productRouter = router({
     });
   }),
 
+  // get todays winner 
+
+  getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
+    // First, get all launched products for today with their vote counts
+    const products = await db.product.findMany({
+      where: {
+        launchDate: {
+          gte: todayStart,
+          lte: todayEnd
+        },
+        isLaunched: true,
+        launchStarted: true
+      },
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        },
+        maker: {
+          select: {
+            name: true,
+            username: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: {
+        votes: { _count: 'desc' }
+      }
+    });
+
+    // If we have products, determine winners (products with same top vote count)
+    if (products.length > 0) {
+      const topVoteCount = products[0]._count?.votes || 0;
+      const winners = products.filter(p => (p._count?.votes || 0) === topVoteCount);
+
+      // If we have less than 3 winners with the top vote count,
+      // get the next tier of winners
+      if (winners.length < 3) {
+        const remainingSlots = 3 - winners.length;
+        const nextTierProducts = products
+          .filter(p => (p._count?.votes || 0) < topVoteCount)
+          .reduce((acc, product) => {
+            const voteCount = product._count?.votes || 0;
+            if (acc.length === 0 || (acc[0]._count?.votes || 0) === voteCount) {
+              acc.push(product);
+            }
+            return acc;
+          }, [] as typeof products)
+          .slice(0, remainingSlots);
+
+        winners.push(...nextTierProducts);
+      }
+
+      return winners;
+    }
+
+    return [];
+  }),
+
+  // ... rest of the code ...
+
   // get today's winners (already launched products)
+  /*
   getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
     const now = new Date();
     const todayStart = startOfDay(now);
@@ -209,6 +283,7 @@ export const productRouter = router({
 
     return winners;
   }),
+  */
   // Add this new procedure
   getDashboardProducts: privateProcedure
     .query(async ({ ctx }) => {
@@ -744,4 +819,4 @@ export const productRouter = router({
     }),
 
   // Update your toggleVote mutation to emit events
-}); 
+});

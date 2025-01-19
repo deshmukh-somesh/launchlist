@@ -128,7 +128,7 @@ export default function UpcomingLaunches() {
   return (
     <div className="py-12 relative">
       {/* Subtle gradient background effect */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" /> */}
 
       <div className="max-w-7xl mx-auto px-4 relative">
         <div className="flex items-center max-w-4xl mx-auto justify-between mb-9">

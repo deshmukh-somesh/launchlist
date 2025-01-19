@@ -14,7 +14,8 @@ function Loading() {
   return (
     <div className='relative min-h-[60vh] w-full'>
       {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" /> */}
+      <div className="absolute" />
 
       <div className='w-full mt-24 flex justify-center relative'>
         <div className='flex flex-col items-center gap-4 p-8 rounded-xl bg-[#151725]/50 border border-[#2A2B3C] backdrop-blur-sm'>

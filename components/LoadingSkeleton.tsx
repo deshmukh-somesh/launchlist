@@ -21,8 +21,8 @@ export default function LoadingSkeleton({ variant = 'default' }: LoadingSkeleton
 
   return (
     <div className="py-12 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" />
-
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-[#6E3AFF]/5 to-transparent pointer-events-none" /> */}
+      <div className="absolute" />
       <div className="max-w-7xl mx-auto px-4 relative">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

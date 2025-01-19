@@ -69,10 +69,15 @@ export const userRouter = router({
   // Get platform statistics
   getPlatformStats: publicProcedure
     .query(async () => {
+      // Get UTC day boundaries
+      const now = new Date();
+      const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+      const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
       const [
         totalProducts,
         totalUsers,
-        totalLaunches24h
+        totalLaunchesToday
       ] = await Promise.all([
         // Get total products
         db.product.count({
@@ -82,12 +87,14 @@ export const userRouter = router({
         }),
         // Get total users
         db.user.count(),
-        // Get launches in last 24 hours
+        // Get launches for today (UTC)
         db.product.count({
           where: {
             isLaunched: true,
+            launchStarted: true,
             launchDate: {
-              gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+              gte: todayStart,
+              lte: todayEnd
             }
           }
         })
@@ -96,7 +103,7 @@ export const userRouter = router({
       return {
         totalProducts,
         totalUsers,
-        totalLaunches24h
+        totalLaunches24h: totalLaunchesToday
       };
     }),
 });
