@@ -12,4 +12,3 @@
 //     text: string | JSX.Element
 // }
 
-// export type ExtendedMessage = OmitText & ExtendedText
