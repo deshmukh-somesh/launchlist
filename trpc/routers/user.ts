@@ -69,6 +69,20 @@ export const userRouter = router({
   // Get platform statistics
   getPlatformStats: publicProcedure
     .query(async () => {
+      const now = new Date();
+      const todayStartUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0
+      ));
+      const todayEndUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        23, 59, 59, 999
+      ));
+
       const [totalProducts, totalUsers, totalLaunchesToday] = await Promise.all([
         // Count all launched products
         db.product.count({
@@ -78,13 +92,13 @@ export const userRouter = router({
         }),
         // Count all users (changed from only counting users with activity)
         db.user.count(),  // Now counts all users
-        // Count products launched today
+        // Count products launched today (UTC)
         db.product.count({
           where: {
             isLaunched: true,
             launchDate: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0)),  // Start of today
-              lte: new Date(new Date().setHours(23, 59, 59, 999))  // End of today
+              gte: todayStartUTC,
+              lte: todayEndUTC
             }
           }
         })

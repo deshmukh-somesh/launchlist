@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardNav } from "@/components/dashboard/NotificationNav";
 import { trpc } from "@/app/_trpc/client";
 import {
   ArrowUpCircle,
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import Image from 'next/image';
 import { ImageIcon } from 'lucide-react';
+import ProductDetailsModal from './ProductDetailsModal';
 
 // Types based on your schema
 type DashboardProduct = {
@@ -127,6 +129,7 @@ export default function DashboardMain() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <DashboardNav/>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
 
@@ -356,175 +359,12 @@ export default function DashboardMain() {
         </TabsContent>
       </Tabs>
 
-      {/* Add the Dialog for viewing product details */}
-      {/* <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl min-h-[400px]">
-          <DialogHeader>
-            <DialogTitle>Product Details</DialogTitle>
-          </DialogHeader>
-
-          {isDetailsLoading ? (
-            <div className="h-full flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            </div>
-          ) : productDetails ? (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {productDetails.name}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Tagline</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {productDetails.tagline}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-md whitespace-pre-wrap">
-                  {productDetails.description}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Website</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  <a href={productDetails.website} target="_blank" rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline">
-                    {productDetails.website}
-                  </a>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Pricing</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {productDetails.pricing}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Launch Date</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {format(new Date(productDetails.launchDate), 'PPP')}
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog> */}
-
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl bg-[#1A1C2E] border border-[#2A2B3C] text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold leading-2 text-gray-200">
-              Product Details
-            </DialogTitle>
-          </DialogHeader>
-
-          {isDetailsLoading ? (
-            <div className="h-72 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#6E3AFF]" />
-            </div>
-          ) : productDetails ? (
-            <div className="mt-6">
-              <dl className="divide-y divide-[#2A2B3C]">
-                {/* Name */}
-                <div className="py-4">
-                  <dt className="text-sm font-medium leading-6 text-gray-200">
-                    Name
-                  </dt>
-                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
-                    {productDetails.name}
-                  </dd>
-                </div>
-
-                {/* Tagline */}
-                <div className="py-4">
-                  <dt className="text-sm font-medium leading-6 text-gray-200">
-                    Tagline
-                  </dt>
-                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
-                    {productDetails.tagline}
-                  </dd>
-                </div>
-
-                {/* Description */}
-                <div className="py-4">
-                  <dt className="text-sm font-medium leading-6 text-gray-200">
-                    Description
-                  </dt>
-                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C] whitespace-pre-wrap">
-                    {productDetails.description}
-                  </dd>
-                </div>
-
-                {/* Website */}
-                <div className="py-4">
-                  <dt className="text-sm font-medium leading-6 text-gray-200">
-                    Website
-                  </dt>
-                  <dd className="mt-2 text-sm bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
-                    <a
-                      href={productDetails.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#6E3AFF] hover:text-[#6E3AFF]/80 hover:underline"
-                    >
-                      {productDetails.website}
-                    </a>
-                  </dd>
-                </div>
-
-                {/* Pricing */}
-                <div className="py-4">
-                  <dt className="text-sm font-medium leading-6 text-gray-200">
-                    Pricing
-                  </dt>
-                  <dd className="mt-2 text-sm bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#6E3AFF]/20 text-[#6E3AFF]">
-                      {productDetails.pricing}
-                    </span>
-                  </dd>
-                </div>
-
-                {/* Launch Date */}
-                <div className="py-4">
-                  <dt className="text-sm font-medium leading-6 text-gray-200">
-                    Launch Date
-                  </dt>
-                  <dd className="mt-2 text-sm text-white bg-[#151725] rounded-lg px-4 py-3 border border-[#2A2B3C]">
-                    {format(new Date(productDetails.launchDate), 'PPP')}
-                  </dd>
-                </div>
-              </dl>
-
-              {/* Footer Actions */}
-              {/* <div className="mt-6 flex items-center justify-end gap-3 pt-6 border-t border-[#2A2B3C]">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsViewModalOpen(false)}
-                  className="bg-[#151725] text-white border-[#2A2B3C] hover:bg-[#2A2B3C]"
-                >
-                  Close
-                </Button>
-                <Link href={`/products/${productDetails.slug}`}>
-                  <Button
-                    variant="default"
-                    className="bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-white hover:opacity-90"
-                  >
-                    View Live
-                  </Button>
-                </Link>
-              </div> */}
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <ProductDetailsModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        productDetails={productDetails}
+        isLoading={isDetailsLoading}
+      />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 "use client"
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { trpc } from "@/app/_trpc/client";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ArrowRight, Rocket, Star, Trophy } from "lucide-react";
+import { ArrowRight, Rocket, Star, Trophy, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import LaunchCountdown from "@/components/LaunchCountdown";
 import UpcomingLaunches from "@/components/UpcomingLaunches";
@@ -12,14 +12,18 @@ import YesterdayWinners from "@/components/YesterdayWinners";
 import PastLaunches from "@/components/PastLaunches";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { useRouter } from 'next/navigation';
-import { LoginLink,useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { LoginLink, useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 
 export default function Home() {
+  // scroll at top 
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const productSectionRef = useRef<HTMLDivElement>(null);
+
   const { isAuthenticated } = useKindeBrowserClient();
   const router = useRouter();
   const utils = trpc.useContext();
   const { data: stats, isLoading: isStatsLoading } = trpc.user.getPlatformStats.useQuery();
-  
+
   useEffect(() => {
     utils.product.getUpcoming.prefetch();
     utils.product.getTodaysWinners.prefetch();
@@ -27,12 +31,32 @@ export default function Home() {
     utils.product.getNextLaunch.prefetch();
   }, []);
 
+  // useEffect with handleScroll function: 
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button when user scrolls down 500px
+      setShowScrollTop(window.scrollY > 1200);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = () => {
+    productSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
   const formatNumber = (num: number) => {
     if (num >= 1000) {
-      return `${Math.floor(num/1000)}K+`;
+      return `${Math.floor(num / 1000)}K+`;
     }
     return `${num}+`;
   };
+
+
 
   return (
     <>
@@ -97,7 +121,7 @@ export default function Home() {
         </h1>
 
         <p className="mt-6 max-w-prose text-lg text-gray-400 leading-relaxed">
-          Join our thriving community of makers and innovators. Share your products, 
+          Join our thriving community of makers and innovators. Share your products,
           get valuable feedback, and be part of the next big thing.
         </p>
 
@@ -114,7 +138,7 @@ export default function Home() {
               Launch Your Product <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           ) : (
-            <LoginLink 
+            <LoginLink
               className={buttonVariants({
                 size: 'lg',
                 className: 'bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-white hover:from-[#5B2FD9] hover:to-[#1E4FBE]',
@@ -136,7 +160,7 @@ export default function Home() {
         </div>
 
         {/* Trust Indicators */}
-        <div className="mt-12 flex items-center justify-center space-x-8 opacity-75">
+        <div className="mt-12 flex items-center justify-center space-x-8 opacity-75" ref={productSectionRef}>
           <div className="flex items-center space-x-2">
             <div className="h-3 w-3 rounded-full bg-[#6E3AFF]"></div>
             <span className="text-sm text-gray-400">100% Secure</span>
@@ -153,14 +177,14 @@ export default function Home() {
       </MaxWidthWrapper>
 
       {/* Product Sections */}
-      <div className="max-w-[1400px] mx-auto px-4 space-y-16">
+      <div className="max-w-[1400px] mx-auto px-4 space-y-16" >
         {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
-        <section>
+        <section >
           <UpcomingLaunches />
         </section>
 
         {/* <section className="bg-[#151725] rounded-xl border border-[#2A2B3C] shadow-lg"> */}
-          {/* <section>
+        {/* <section>
           <TodaysWinners />
         </section> */}
 
@@ -174,6 +198,20 @@ export default function Home() {
           <PastLaunches />
         </section>
       </div>
+
+      {/* Scroll to Top Button */}
+      <button
+        onClick={scrollToSection}
+        className={`fixed bottom-8 right-8 p-3 rounded-full bg-[#151725] border border-[#2A2B3C] hover:border-[#6E3AFF] transition-all duration-300 shadow-lg ${
+          showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
+        }`}
+        aria-label="Scroll to products section"
+      >
+        <div className="relative">
+          <div className="absolute -inset-1 bg-[#6E3AFF] rounded-full blur opacity-30" />
+          <ArrowUp className="h-6 w-6 text-[#6E3AFF] relative" />
+        </div>
+      </button>
     </>
   );
 }
