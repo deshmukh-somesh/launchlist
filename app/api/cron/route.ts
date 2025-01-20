@@ -16,11 +16,10 @@ export async function GET(request: Request) {
     const result = await db.product.updateMany({
       where: {
         launchDate: { lte: now },
-        isLaunched: true,
-        launchStarted: false
+        isLaunched: false
       },
       data: {
-        launchStarted: true
+        isLaunched: true
       }
     });
 
