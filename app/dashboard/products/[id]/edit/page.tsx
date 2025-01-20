@@ -166,9 +166,9 @@ function getErrorTitle(message: string): string {
 function getErrorMessage(message: string): string {
   switch (message) {
     case 'Product not found':
-      return 'We couldn\'t find the product you\'re looking for.';
+      return "We couldn&apos;t find the product you&apos;re looking for.";
     case 'Not authorized to view this product':
-      return 'You don\'t have permission to view or edit this product.';
+      return "You don&apos;t have permission to view or edit this product.";
     default:
       return 'An unexpected error occurred while loading the product.';
   }

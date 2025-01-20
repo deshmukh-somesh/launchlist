@@ -32,7 +32,7 @@ export default function TodaysWinners() {
               <div className="absolute -inset-1 bg-[#FFD700] rounded-full blur opacity-30 animate-pulse" />
               <Trophy className="h-8 w-8 text-[#FFD700]" /> {/* Gold color for trophy */}
             </div>
-            <h2 className="text-3xl font-bold text-white">Today's Winners</h2>
+            <h2 className="text-3xl font-bold text-white">Today&apos;s Winners</h2>
           </div>
 
           {/* Subtitle with improved contrast */}

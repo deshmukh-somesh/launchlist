@@ -17,7 +17,7 @@ export default function NewUserOnboarding({ kindeUser }: { kindeUser: any }) {
           <div className="text-center pb-6 border-b">
             <h2 className="font-semibold">Welcome to LaunchList! 👋</h2>
             <p className="text-gray-600 mt-1">
-              Let's set up your maker profile to get started
+              Let&apos;s set up your maker profile to get started
             </p>
           </div>
 
