@@ -58,7 +58,13 @@ export default function TodaysWinners() {
         <div className="mb-8">
           {/* Title section with trophy icon and gradient underline */}
           <div className="flex items-center gap-3 mb-2">
-            <Trophy className="h-8 w-8 text-[#FFD700]" /> {/* Gold color for trophy */}
+
+            {/* <Trophy className="h-8 w-8 text-[#FFD700]" /> Gold color for trophy */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-[#FFD700] rounded-full blur opacity-30 animate-pulse" />
+              <Trophy className="h-8 w-8 text-[#FFD700]" /> {/* Gold color for trophy */}
+            </div>
+
             <h2 className="text-3xl font-bold text-white">Today&apos;s Winners</h2>
           </div>
           
