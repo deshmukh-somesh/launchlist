@@ -277,7 +277,7 @@ export const productRouter = router({
           lte: todayEnd
         },
         isLaunched: true,
-        launchStarted: true
+        // launchStarted: true
       },
       include: {
         categories: {

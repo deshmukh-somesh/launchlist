@@ -115,7 +115,7 @@ export default function PastLaunches() {
         {!hasNextPage && data?.pages.some(page => page.items.length > 0) && (
           <div className="mt-12 text-center">
             <div className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-[#151725] border border-[#2A2B3C]">
-              <span className="text-sm text-gray-400">You've reached the end</span>
+              <span className="text-sm text-gray-400">You&apos;ve reached the end</span>
             </div>
           </div>
         )}

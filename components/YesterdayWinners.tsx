@@ -34,7 +34,7 @@ export default function YesterdayWinners() {
               <div className="absolute -inset-1 bg-gray-400 rounded-full blur opacity-30 animate-pulse" />
               <Award className="h-8 w-8 text-gray-400 relative" />
             </div>
-            <h2 className="text-3xl font-bold text-white">Yesterday's Winners</h2>
+            <h2 className="text-3xl font-bold text-white">Yesterday&apos;s Winners</h2>
           </div>
 
           {/* Subtitle with improved contrast */}
@@ -110,7 +110,7 @@ export default function YesterdayWinners() {
               No winners from yesterday
             </p>
             <p className="text-gray-500 mt-2">
-              Check today's launches and cast your votes!
+              Check today&apos;s launches and cast your votes!
             </p>
           </div>
         )}

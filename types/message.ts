@@ -1,15 +1,15 @@
-// trpc let's us infer the types. 
+// // trpc let's us infer the types. 
 
-import { AppRouter } from "@/trpc";
-import { inferRouterOutputs } from "@trpc/server";
+// import { AppRouter } from "@/trpc";
+// import { inferRouterOutputs } from "@trpc/server";
 
-type RouterOutput = inferRouterOutputs<AppRouter>
-type Messages = RouterOutput["getFileMessages"]["messages"]
+// type RouterOutput = inferRouterOutputs<AppRouter>
+// type Messages = RouterOutput["getFileMessages"]["messages"]
 
-type OmitText = Omit<Messages[number], "text">
+// type OmitText = Omit<Messages[number], "text">
 
-type ExtendedText = {
-    text: string | JSX.Element
-}
+// type ExtendedText = {
+//     text: string | JSX.Element
+// }
 
-export type ExtendedMessage = OmitText & ExtendedText
+// export type ExtendedMessage = OmitText & ExtendedText
