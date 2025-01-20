@@ -21,7 +21,7 @@ export default async function DashboardPage() {
 
   return (
     // Wrapper div with dark theme styling
-    <div className="min-h-[calc(100vh-64px)] bg-[#0A0B14]">
+    <div className="min-h-[calc(100vh-64px)]">
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#6E3AFF]/5 via-transparent to-[#2563EB]/5 pointer-events-none" />
       

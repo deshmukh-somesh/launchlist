@@ -3,8 +3,26 @@ import { router, privateProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 
 export const userRouter = router({
-  // Get user profile
-  getProfile: publicProcedure
+  // Get current user's profile for the form
+  getProfile: privateProcedure
+    .query(async ({ ctx }) => {
+      const user = await db.user.findUnique({
+        where: { id: ctx.userId },
+        select: {
+          name: true,
+          username: true,
+          bio: true,
+          website: true,
+          twitter: true,
+          github: true,
+          avatarUrl: true,
+        },
+      });
+      return user;
+    }),
+
+  // Get public profile by username (for viewing other profiles)
+  getPublicProfile: publicProcedure
     .input(z.object({ username: z.string() }))
     .query(async ({ ctx, input }) => {
       const user = await db.user.findUnique({
@@ -18,20 +36,77 @@ export const userRouter = router({
       return user;
     }),
 
-  // Update user profile
+  // Update user profile with validation
   updateProfile: privateProcedure
     .input(z.object({
-      name: z.string().optional(),
-      bio: z.string().optional(),
-      website: z.string().url().optional(),
-      twitter: z.string().optional(),
-      github: z.string().optional(),
+      name: z.string().min(1, "Name is required"),
+      username: z.string().min(1, "Username is required")
+        .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+      bio: z.string().nullable(),
+      website: z.string().url().nullable().or(z.literal('')),
+      twitter: z.string()
+        .regex(/^[A-Za-z0-9_]{1,15}$/, "Invalid Twitter handle")
+        .nullable()
+        .or(z.literal('')),
+      github: z.string()
+        .regex(/^[A-Za-z0-9-]+$/, "Invalid GitHub username")
+        .nullable()
+        .or(z.literal('')),
+      avatarUrl: z.string().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
-      return db.user.update({
+      // Check if username is already taken (excluding current user)
+      if (input.username) {
+        const existingUser = await db.user.findFirst({
+          where: {
+            username: input.username,
+            NOT: {
+              id: ctx.userId
+            }
+          }
+        });
+
+        if (existingUser) {
+          throw new Error("Username is already taken");
+        }
+      }
+
+      // Clean up empty string inputs to be null
+      const cleanedInput = {
+        ...input,
+        website: input.website || null,
+        twitter: input.twitter || null,
+        github: input.github || null,
+      };
+
+      try {
+        const updatedUser = await db.user.update({
+          where: { id: ctx.userId },
+          data: cleanedInput,
+        });
+
+        return updatedUser;
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        throw new Error("Failed to update profile");
+      }
+    }),
+
+  // Check if profile is complete
+  isProfileComplete: privateProcedure
+    .query(async ({ ctx }) => {
+      const user = await db.user.findUnique({
         where: { id: ctx.userId },
-        data: input,
+        select: {
+          name: true,
+          username: true,
+        },
       });
+
+      return {
+        isComplete: !!(user?.name && user?.username),
+        user
+      };
     }),
 
   // Follow/Unfollow user

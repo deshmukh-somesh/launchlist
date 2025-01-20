@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DashboardNav } from "@/components/dashboard/NotificationNav";
+// import { DashboardNav } from "@/components/dashboard/NotificationNav";
 import { trpc } from "@/app/_trpc/client";
 import {
   ArrowUpCircle,
@@ -15,7 +15,9 @@ import {
   Plus,
   Trash2,
   Eye,
-  Loader2
+  Loader2,
+  UserCircle,
+  CheckCircle,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -40,6 +42,7 @@ import {
 import Image from 'next/image';
 import { ImageIcon } from 'lucide-react';
 import ProductDetailsModal from './ProductDetailsModal';
+import UserProfileForm from './UserProfileForm';
 
 // Types based on your schema
 type DashboardProduct = {
@@ -60,6 +63,27 @@ type DashboardProduct = {
 export default function DashboardMain() {
   const router = useRouter();
   const utils = trpc.useContext();
+  const [activeTab, setActiveTab] = useState('profile');
+  
+  // Fetch user profile data
+  const { data: profileData, isLoading: isProfileLoading } = trpc.user.getProfile.useQuery();
+  const { data: profileStatus } = trpc.user.isProfileComplete.useQuery();
+
+  const isProfileComplete = profileStatus?.isComplete;
+
+  // Handle tab changes with profile completion check
+  const handleTabChange = (value: string) => {
+    if (value !== 'profile' && !isProfileComplete) {
+      toast({
+        title: "Complete Your Profile",
+        description: "Please complete your profile information before accessing other features.",
+        variant: "destructive",
+      });
+      setActiveTab('profile');
+      return;
+    }
+    setActiveTab(value);
+  };
 
   // Combine the isPending states into one
   const { data, isPending: isProductsLoading } = trpc.product.getDashboardProducts.useQuery();
@@ -128,235 +152,280 @@ export default function DashboardMain() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
-      <DashboardNav/>
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <div className="space-y-6">
+      {/* <DashboardNav /> */}
 
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Upvotes</p>
-                <p className="text-xl sm:text-2xl font-bold">{data?.totalVotes ?? 0}</p>
-              </div>
-              <ArrowUpCircle className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+      {/* Profile Completion Banner */}
+      {!isProfileComplete && (
+        <div className="bg-[#1A1C2E] border border-[#2A2B3C] p-4 rounded-lg">
+          <div className="flex items-center gap-3">
+            <UserCircle className="h-5 w-5 text-[#6E3AFF]" />
+            <div className="flex-1">
+              <h3 className="font-medium text-white">Complete Your Profile</h3>
+              <p className="text-sm text-gray-400">
+                Please complete your profile to access all features
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      )}
 
-        <Card>
-          <CardContent className=" p-4 sm:p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Comments</p>
-                <p className="text-xl sm:text-2xl font-bold">{data?.totalComments ?? 0}</p>
-              </div>
-              <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Products</p>
-                <p className="text-xl sm:text-2xl font-bold">{data?.totalProducts ?? 0}</p>
-              </div>
-              <Rocket className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs defaultValue="products" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="collections">Collections</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="border-b border-[#2A2B3C]">
+          <TabsTrigger 
+            value="profile" 
+            className="relative"
+          >
+            Profile
+            {isProfileComplete && (
+              <CheckCircle className="h-4 w-4 text-green-500 ml-2" />
+            )}
+          </TabsTrigger>
+          <TabsTrigger 
+            value="products"
+            disabled={!isProfileComplete}
+            className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
+          >
+            Products
+          </TabsTrigger>
+          <TabsTrigger 
+            value="collections"
+            disabled={!isProfileComplete}
+            className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
+          >
+            Collections
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="products">
+        <TabsContent value="profile">
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">My Products</h2>
-              <Link href="/dashboard/products/new">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Product
-                </Button>
-              </Link>
-            </div>
-
-            {/* Products List */}
-            <div className="grid gap-4">
-              {isProductsLoading ? (
-                // Loading skeleton
-                Array(3).fill(0).map((_, i) => (
-                  <Card key={i}>
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        <div className="w-[100px] h-[100px] bg-gray-100 rounded-lg animate-pulse" />
-                        <div className="flex-1 space-y-4">
-                          <div className="h-4 bg-gray-100 rounded w-1/4 animate-pulse" />
-                          <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                data?.products.map((product: DashboardProduct) => (
-                  <Card key={product.id}>
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
-                        {/* Product Thumbnail */}
-                        <div className="w-[100px] h-[100px] bg-gray-100 rounded-lg flex-shrink-0 relative">
-                          {product.thumbnail ? (
-                            <Image
-                              src={product.thumbnail}
-                              alt={product.name}
-                              fill
-                              className="object-cover rounded-lg"
-                              sizes="100px"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <ImageIcon className="h-8 w-8" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Product Info */}
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-semibold">{product.name}</h3>
-                              <p className="text-gray-600 text-sm mt-1">
-                                {product.tagline}
-                              </p>
-                            </div>
-                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
-                              {product.pricing}
-                            </span>
-                          </div>
-
-                          <div className="flex gap-4 mt-4">
-                            <span className="flex items-center gap-1 text-sm text-gray-500">
-                              <ArrowUpCircle className="h-4 w-4" />
-                              {product._count.votes}
-                            </span>
-                            <span className="flex items-center gap-1 text-sm text-gray-500">
-                              <MessageCircle className="h-4 w-4" />
-                              {product._count.comments}
-                            </span>
-                          </div>
-
-                          <div className="flex gap-2 mt-4">
-                            {!product.isLaunched ? (
-                              <>
-                                <Link href={`/dashboard/products/${product.id}/edit`}>
-                                  <Button variant="outline">
-                                    Edit
-                                  </Button>
-                                </Link>
-                                <Button
-                                  onClick={() => launchProduct.mutate({ productId: product.id })}
-                                  variant="default"
-                                >
-                                  Launch Product
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="destructive"
-                                      size="icon"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete your
-                                        product and remove it from our servers.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDelete(product.id)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </>
-                            ) : (
-                              <div className="flex gap-2 items-center">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedProduct(product);
-                                    setIsViewModalOpen(true);
-                                  }}
-                                  onMouseEnter={() => prefetchProduct(product.id)}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Form
-                                </Button>
-                                <Link href={`/products/${product.slug}`}>
-                                  <Button variant="default">
-                                    <Rocket className="h-4 w-4 mr-2" />
-                                    View Live
-                                  </Button>
-                                </Link>
-                                <span className="text-sm text-green-600 flex items-center gap-1">
-                                  <Rocket className="h-4 w-4" />
-                                  Launched
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+              <h2 className="text-lg font-semibold text-white">My Profile</h2>
+              {isProfileComplete && (
+                <div className="flex items-center gap-2 text-green-500">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm">Profile Complete</span>
+                </div>
               )}
             </div>
-          </div>
-        </TabsContent>
 
-        <TabsContent value="collections">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">My Collections</h2>
-              <Button variant="outline">
-                <FolderHeart className="h-4 w-4 mr-2" />
-                New Collection
-              </Button>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* Collections will be mapped here */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold">Collection Name</h3>
-                  <p className="text-sm text-gray-600 mt-1">Collection description</p>
-                  <div className="flex justify-between items-center mt-4">
-                    <span className="text-sm text-gray-500">0 products</span>
-                    <span className="text-sm text-gray-500">Public</span>
+            <Card className="bg-[#1A1C2E] border-[#2A2B3C]">
+              <CardContent className="p-6">
+                {isProfileLoading ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ) : (
+                  <UserProfileForm 
+                    initialData={profileData || {
+                      name: '',
+                      username: '',
+                      bio: null,
+                      website: null,
+                      twitter: null,
+                      github: null,
+                      avatarUrl: null
+                    }}
+                    onComplete={() => {
+                      toast({
+                        title: "Profile Complete!",
+                        description: "You can now access all features.",
+                        variant: "default",
+                      });
+                      setActiveTab('products');
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
+
+        {isProfileComplete && (
+          <>
+            <TabsContent value="products">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-white">My Products</h2>
+                  <Button 
+                    onClick={() => router.push('/dashboard/products/new')}
+                    className="bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Product
+                  </Button>
+                </div>
+
+                {/* Products List */}
+                <div className="grid gap-4">
+                  {isProductsLoading ? (
+                    // Loading skeleton
+                    Array(3).fill(0).map((_, i) => (
+                      <Card key={i}>
+                        <CardContent className="p-6">
+                          <div className="flex gap-4">
+                            <div className="w-[100px] h-[100px] bg-gray-100 rounded-lg animate-pulse" />
+                            <div className="flex-1 space-y-4">
+                              <div className="h-4 bg-gray-100 rounded w-1/4 animate-pulse" />
+                              <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    data?.products.map((product: DashboardProduct) => (
+                      <Card key={product.id}>
+                        <CardContent className="p-6">
+                          <div className="flex gap-4">
+                            {/* Product Thumbnail */}
+                            <div className="w-[100px] h-[100px] bg-gray-100 rounded-lg flex-shrink-0 relative">
+                              {product.thumbnail ? (
+                                <Image
+                                  src={product.thumbnail}
+                                  alt={product.name}
+                                  fill
+                                  className="object-cover rounded-lg"
+                                  sizes="100px"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                  <ImageIcon className="h-8 w-8" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Product Info */}
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h3 className="font-semibold">{product.name}</h3>
+                                  <p className="text-gray-600 text-sm mt-1">
+                                    {product.tagline}
+                                  </p>
+                                </div>
+                                <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                                  {product.pricing}
+                                </span>
+                              </div>
+
+                              <div className="flex gap-4 mt-4">
+                                <span className="flex items-center gap-1 text-sm text-gray-500">
+                                  <ArrowUpCircle className="h-4 w-4" />
+                                  {product._count.votes}
+                                </span>
+                                <span className="flex items-center gap-1 text-sm text-gray-500">
+                                  <MessageCircle className="h-4 w-4" />
+                                  {product._count.comments}
+                                </span>
+                              </div>
+
+                              <div className="flex gap-2 mt-4">
+                                {!product.isLaunched ? (
+                                  <>
+                                    <Link href={`/dashboard/products/${product.id}/edit`}>
+                                      <Button variant="outline">
+                                        Edit
+                                      </Button>
+                                    </Link>
+                                    <Button
+                                      onClick={() => launchProduct.mutate({ productId: product.id })}
+                                      variant="default"
+                                    >
+                                      Launch Product
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="destructive"
+                                          size="icon"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete your
+                                            product and remove it from our servers.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => handleDelete(product.id)}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </>
+                                ) : (
+                                  <div className="flex gap-2 items-center">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedProduct(product);
+                                        setIsViewModalOpen(true);
+                                      }}
+                                      onMouseEnter={() => prefetchProduct(product.id)}
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View Form
+                                    </Button>
+                                    <Link href={`/products/${product.slug}`}>
+                                      <Button variant="default">
+                                        <Rocket className="h-4 w-4 mr-2" />
+                                        View Live
+                                      </Button>
+                                    </Link>
+                                    <span className="text-sm text-green-600 flex items-center gap-1">
+                                      <Rocket className="h-4 w-4" />
+                                      Launched
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="collections">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold">My Collections</h2>
+                  <Button variant="outline">
+                    <FolderHeart className="h-4 w-4 mr-2" />
+                    New Collection
+                  </Button>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Collections will be mapped here */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="font-semibold">Collection Name</h3>
+                      <p className="text-sm text-gray-600 mt-1">Collection description</p>
+                      <div className="flex justify-between items-center mt-4">
+                        <span className="text-sm text-gray-500">0 products</span>
+                        <span className="text-sm text-gray-500">Public</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
 
       <ProductDetailsModal
