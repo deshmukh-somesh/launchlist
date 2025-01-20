@@ -8,7 +8,5 @@
 
 // type OmitText = Omit<Messages[number], "text">
 
-// type ExtendedText = {
-//     text: string | JSX.Element
-// }
+
 
