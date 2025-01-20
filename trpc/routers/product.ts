@@ -7,6 +7,22 @@ import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { observable } from '@trpc/server/observable';
 import { EventEmitter } from 'events';
 
+function getUTCDay() {
+  const now = new Date();
+  // Create UTC start of day
+  const utcStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+  // Create UTC end of day
+  const utcEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
+  console.log({
+    currentUTC: now.toISOString(),
+    utcDayStart: utcStart.toISOString(),
+    utcDayEnd: utcEnd.toISOString()
+  });
+
+  return { now, utcStart, utcEnd };
+}
+
 const voteEvents = new EventEmitter();
 
 const enrichProductWithVoteStatus = async (product: any, userId: string | null) => {
@@ -52,19 +68,30 @@ export const productRouter = router({
       });
     }),
 
-  // get upcoming products
+  // Get products for today's launches
   getUpcoming: publicProcedure.query(async ({ ctx }) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day
+    const now = new Date();
+    const todayStartUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0
+    ));
+    const todayEndUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      23, 59, 59, 999
+    ));
+
+    // Get all products for today
     const products = await db.product.findMany({
       where: {
         launchDate: {
-          gt: today // Get products with launch dates after today
+          gte: todayStartUTC,
+          lte: todayEndUTC
         },
         isLaunched: true
-      },
-      orderBy: {
-        launchDate: 'asc'
       },
       include: {
         categories: {
@@ -75,7 +102,8 @@ export const productRouter = router({
         maker: {
           select: {
             name: true,
-            avatarUrl: true
+            avatarUrl: true,
+            username: true
           }
         },
         _count: {
@@ -87,10 +115,102 @@ export const productRouter = router({
       }
     });
 
-    // Enrich with vote status
-    return Promise.all(
-      products.map(product => enrichProductWithVoteStatus(product, ctx.userId))
+    // If user is authenticated, enrich with vote status
+    const enrichedProducts = ctx.userId
+      ? await Promise.all(products.map(product => 
+          enrichProductWithVoteStatus(product, ctx.userId)
+        ))
+      : products;
+
+    // After 21:00 UTC, determine winners with ties
+    const isVotingClosed = now.getUTCHours() >= 21;
+    
+    if (isVotingClosed && products.length > 0) {
+      // Sort by votes first, then by launch time for ties
+      return enrichedProducts.sort((a, b) => {
+        const voteDiff = (b._count?.votes || 0) - (a._count?.votes || 0);
+        if (voteDiff === 0) {
+          // If votes are tied, sort by launch time
+          return new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime();
+        }
+        return voteDiff;
+      });
+    }
+
+    // Before 21:00 UTC, sort by launch time
+    return enrichedProducts.sort((a, b) => 
+      new Date(a.launchDate).getTime() - new Date(b.launchDate).getTime()
     );
+  }),
+
+  // Get yesterday's winners
+  getYesterdayWinners: publicProcedure.query(async () => {
+    const now = new Date();
+    const yesterdayStartUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - 1,
+      0, 0, 0
+    ));
+    const yesterdayEndUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - 1,
+      23, 59, 59, 999
+    ));
+
+    const products = await db.product.findMany({
+      where: {
+        launchDate: {
+          gte: yesterdayStartUTC,
+          lte: yesterdayEndUTC
+        },
+        isLaunched: true
+      },
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        },
+        maker: {
+          select: {
+            name: true,
+            avatarUrl: true,
+            username: true
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: {
+        votes: {
+          _count: 'desc'
+        }
+      }
+    });
+
+    // Add logic to detect ties
+    const enrichedProducts = products.map((product, index, array) => {
+      const currentVotes = product._count?.votes || 0;
+      const prevProduct = index > 0 ? array[index - 1] : null;
+      const prevVotes = prevProduct ? prevProduct._count?.votes || 0 : null;
+      
+      const isTied = prevProduct && currentVotes === prevVotes;
+      const rank = isTied ? array.findIndex(p => (p._count?.votes || 0) === currentVotes) + 1 : index + 1;
+
+      return {
+        ...product,
+        rank,
+        isTied
+      };
+    });
+
+    return enrichedProducts;
   }),
 
   // get yesterday's products
@@ -123,6 +243,7 @@ export const productRouter = router({
           select: {
             name: true,
             avatarUrl: true,
+            username: true,
           }
         },
         _count: {
@@ -141,27 +262,23 @@ export const productRouter = router({
     });
   }),
 
-  // get todays winners
-  getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // get todays winner 
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    // Get products launched today with most votes
-    const winners = await db.product.findMany({
+  getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
+    // First, get all launched products for today with their vote counts
+    const products = await db.product.findMany({
       where: {
         launchDate: {
-          gte: today,
-          lt: tomorrow
-        }
+          gte: todayStart,
+          lte: todayEnd
+        },
+        isLaunched: true,
+        launchStarted: true
       },
-      orderBy: {
-        votes: {
-          _count: 'desc' // Order by vote count descending
-        }
-      },
-      take: 3, // Get top 3 winners
       include: {
         categories: {
           include: {
@@ -171,6 +288,85 @@ export const productRouter = router({
         maker: {
           select: {
             name: true,
+            username: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            votes: true,
+            comments: true
+          }
+        }
+      },
+      orderBy: {
+        votes: { _count: 'desc' }
+      }
+    });
+
+    // If we have products, determine winners (products with same top vote count)
+    if (products.length > 0) {
+      const topVoteCount = products[0]._count?.votes || 0;
+      const winners = products.filter(p => (p._count?.votes || 0) === topVoteCount);
+
+      // If we have less than 3 winners with the top vote count,
+      // get the next tier of winners
+      if (winners.length < 3) {
+        const remainingSlots = 3 - winners.length;
+        const nextTierProducts = products
+          .filter(p => (p._count?.votes || 0) < topVoteCount)
+          .reduce((acc, product) => {
+            const voteCount = product._count?.votes || 0;
+            if (acc.length === 0 || (acc[0]._count?.votes || 0) === voteCount) {
+              acc.push(product);
+            }
+            return acc;
+          }, [] as typeof products)
+          .slice(0, remainingSlots);
+
+        winners.push(...nextTierProducts);
+      }
+
+      return winners;
+    }
+
+    return [];
+  }),
+
+  // ... rest of the code ...
+
+  // get today's winners (already launched products)
+  /*
+  getTodaysWinners: publicProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
+    const winners = await db.product.findMany({
+      where: {
+        launchDate: {
+          gte: todayStart,
+          lte: now // Only get products that should have launched by now
+        },
+        isLaunched: true,
+        launchStarted: true, // New field to track actual launch
+      },
+      orderBy: {
+        votes: {
+          _count: 'desc'
+        }
+      },
+      take: 3,
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        },
+        maker: {
+          select: {
+            name: true,
+            username: true,
             avatarUrl: true
           }
         },
@@ -182,8 +378,10 @@ export const productRouter = router({
         }
       }
     });
+
     return winners;
   }),
+  */
   // Add this new procedure
   getDashboardProducts: privateProcedure
     .query(async ({ ctx }) => {
@@ -351,8 +549,21 @@ export const productRouter = router({
 
   // Toggle vote
   toggleVote: privateProcedure
-    .input(z.object({ productId: z.string() }))
+    .input(z.object({
+      productId: z.string()
+    }))
     .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+      const currentUTCHour = now.getUTCHours();
+
+      // Check if voting is still allowed (before 21:00 UTC)
+      if (currentUTCHour >= 21) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Voting has ended for today'
+        });
+      }
+
       if (!ctx.userId) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',
@@ -560,72 +771,29 @@ export const productRouter = router({
       });
     }),
 
-  // Get yesterday's winners (top 3)
-  getYesterdayWinners: publicProcedure.query(async ({ ctx }) => {
-    const yesterday = startOfDay(addDays(new Date(), -1));
-    const today = startOfDay(new Date());
-
-    const products = await db.product.findMany({
-      where: {
-        launchDate: {
-          gte: yesterday,
-          lt: today
-        },
-        isLaunched: true
-      },
-      orderBy: {
-        votes: {
-          _count: 'desc'
-        }
-      },
-      take: 3,
-      include: {
-        categories: {
-          include: {
-            category: true
-          }
-        },
-        maker: {
-          select: {
-            name: true,
-            avatarUrl: true
-          }
-        },
-        _count: {
-          select: {
-            votes: true,
-            comments: true
-          }
-        }
-      }
-    });
-
-    // Enrich with vote status
-    return Promise.all(
-      products.map(product => enrichProductWithVoteStatus(product, ctx.userId))
-    );
-  }),
-
   // Get past launches (paginated)
   getPastLaunches: publicProcedure
     .input(z.object({
-      cursor: z.string().nullish(),
       limit: z.number().min(1).max(100).default(10),
+      cursor: z.string().optional(),
     }))
-    .query(async ({ ctx, input }) => {
-      const today = startOfDay(new Date());
+    .query(async ({ input }) => {
+      const now = new Date();
+      const twoDaysAgoUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() - 2,
+        0, 0, 0
+      ));
 
       const items = await db.product.findMany({
+        take: input.limit + 1,
         where: {
           launchDate: {
-            lt: today
+            lt: twoDaysAgoUTC
           },
           isLaunched: true
         },
-        orderBy: {
-          launchDate: 'desc'
-        },
-        take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
         include: {
           categories: {
@@ -636,43 +804,92 @@ export const productRouter = router({
           maker: {
             select: {
               name: true,
-              avatarUrl: true
+              avatarUrl: true,
+              username: true
             }
           },
           _count: {
             select: {
               votes: true,
-              comments: true,
+              comments: true
             }
           }
-        }
+        },
+        orderBy: [
+          { launchDate: 'desc' },
+          { votes: { _count: 'desc' }}
+        ]
       });
 
-      // Enrich items with vote status
-      const enrichedItems = await Promise.all(
-        items.map(product => enrichProductWithVoteStatus(product, ctx.userId))
-      );
-
       let nextCursor: typeof input.cursor | undefined = undefined;
-      if (enrichedItems.length > input.limit) {
-        const nextItem = enrichedItems.pop();
+      if (items.length > input.limit) {
+        const nextItem = items.pop();
         nextCursor = nextItem!.id;
       }
 
       return {
-        items: enrichedItems,
+        items,
         nextCursor,
       };
     }),
 
-  // Get next launch time
-  getNextLaunch: publicProcedure.query(async ({ ctx }) => {
+  // Get next launch for countdown
+  getNextLaunch: publicProcedure.query(async () => {
     const now = new Date();
+    const currentUTCHour = now.getUTCHours();
+    
+    // If before 21:00 UTC, get next launch today
+    if (currentUTCHour < 21) {
+      const todayStartUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0
+      ));
+      const todayEndUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        23, 59, 59, 999
+      ));
 
-    const nextLaunch = await db.product.findFirst({
+      const nextLaunch = await db.product.findFirst({
+        where: {
+          launchDate: {
+            gte: now,
+            lte: todayEndUTC
+          },
+          isLaunched: true
+        },
+        orderBy: {
+          launchDate: 'asc'
+        },
+        select: {
+          name: true,
+          launchDate: true
+        }
+      });
+
+      if (nextLaunch) {
+        return {
+          ...nextLaunch,
+          isVotingEnd: false // During the day, we're counting down to voting end
+        };
+      }
+    }
+
+    // After 21:00 UTC or no more launches today, return tomorrow's first launch
+    const tomorrowStartUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0
+    ));
+
+    const nextDayLaunch = await db.product.findFirst({
       where: {
         launchDate: {
-          gt: now
+          gte: tomorrowStartUTC
         },
         isLaunched: true
       },
@@ -680,11 +897,18 @@ export const productRouter = router({
         launchDate: 'asc'
       },
       select: {
+        name: true,
         launchDate: true
       }
     });
 
-    return nextLaunch;
+    if (nextDayLaunch) {
+      return {
+        ...nextDayLaunch,
+        isVotingEnd: true // After 21:00 UTC, we're counting down to next day's launch
+      };
+    }
+    return null;
   }),
 
   // Get current vote count

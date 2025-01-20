@@ -10,7 +10,12 @@ import {
   Bell,
   Settings,
   Plus,
+  Menu,
+  X,
+  ChevronLeft
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 const routes = [
   {
@@ -47,46 +52,113 @@ const routes = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close mobile menu when screen size becomes large
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) { // lg breakpoint
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
-    <div className="space-y-4 py-4 flex flex-col h-full bg-gray-900 text-white">
-      <div className="px-3 py-2 flex-1">
-        <Link href="/dashboard" className="flex items-center pl-3 mb-14">
-          <h1 className="text-2xl font-bold">LaunchList</h1>
-        </Link>
-        <div className="space-y-1">
-          {routes.map((route) => (
+    <>
+      {/* Mobile Menu Button */}
+      <div className="fixed top-4 right-4 z-50 lg:hidden">
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-[#151725] text-white border-[#2A2B3C] hover:bg-[#1A1C2E] hover:border-[#6E3AFF]"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      </div>
+
+      {/* Sidebar */}
+      <div 
+        className={cn(
+          "h-full transition-all duration-300 ease-in-out",
+          "bg-[#151725] border-r border-[#2A2B3C]",
+          // Mobile: full-screen overlay
+          "fixed inset-0 z-40 w-full lg:w-64",
+          // Transform
+          "transform lg:transform-none",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+          // Desktop: static positioning
+          "lg:relative lg:translate-x-0"
+        )}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="p-4 border-b border-[#2A2B3C]">
+            <Link 
+              href="/dashboard" 
+              className="flex items-center gap-2 px-2"
+            >
+              <h1 className="text-xl font-bold text-white">LaunchList</h1>
+            </Link>
+          </div>
+
+          {/* Navigation Links */}
+          <div className="flex-1 overflow-y-auto py-4 px-3">
+            <nav className="space-y-1">
+              {routes.map((route) => (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg",
+                    "text-sm font-medium",
+                    "transition-colors duration-200",
+                    "hover:bg-[#1A1C2E] hover:text-white",
+                    pathname === route.href 
+                      ? "bg-[#1A1C2E] text-white" 
+                      : "text-gray-400"
+                  )}
+                >
+                  <route.icon className={cn("h-5 w-5", route.color)} />
+                  {route.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Submit Product Button */}
+          <div className="p-4 border-t border-[#2A2B3C]">
             <Link
-              key={route.href}
-              href={route.href}
+              href="/submit"
               className={cn(
-                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                pathname === route.href
-                  ? "text-white bg-white/10"
-                  : "text-zinc-400"
+                "flex items-center gap-2 px-3 py-2 rounded-lg",
+                "text-sm font-medium text-white",
+                "bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]",
+                "hover:opacity-90 transition-opacity"
               )}
             >
-              <div className="flex items-center flex-1">
-                <route.icon className={cn("h-5 w-5 mr-3", route.color)} />
-                {route.label}
-              </div>
+              <Plus className="h-5 w-5" />
+              Submit Product
             </Link>
-          ))}
+          </div>
         </div>
       </div>
-      <div className="px-3">
-        <Link
-          href="/submit"
-          className={cn(
-            "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-blue-600 bg-blue-500 rounded-lg transition"
-          )}
-        >
-          <div className="flex items-center flex-1">
-            <Plus className="h-5 w-5 mr-3" />
-            Submit Product
-          </div>
-        </Link>
-      </div>
-    </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+    </>
   );
-} 
+}
