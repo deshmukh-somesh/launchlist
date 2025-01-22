@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from '@/components/ui/use-toast';
@@ -21,9 +21,20 @@ type FormInputs = {
   thumbnail: string | null;
 };
 
+// Utility function to generate slug from name
+const generateSlug = (name: string) => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Remove consecutive hyphens
+};
+
 export default function NewProductForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -49,6 +60,16 @@ export default function NewProductForm() {
     }
   });
 
+
+  const name = watch('name');
+
+  // Auto-generate slug when name changes
+  useEffect(() => {
+    if (name && !isSlugManuallyEdited) {
+      setValue('slug', generateSlug(name));
+    }
+  }, [name, setValue, isSlugManuallyEdited]);
+  
   const utils = trpc.useContext();
   const createProduct = trpc.product.create.useMutation({
     onSuccess: async () => {
@@ -134,7 +155,7 @@ export default function NewProductForm() {
         </div>
 
         {/* Slug */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-200 mb-2">
             Slug
           </label>
@@ -147,6 +168,45 @@ export default function NewProductForm() {
           {errors.slug && (
             <p className="text-red-400 text-sm mt-1">{errors.slug.message}</p>
           )}
+        </div> */}
+
+<div>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Slug
+          </label>
+          <div className="relative">
+            <input
+              {...register("slug", { required: "Slug is required" })}
+              className={inputWrapper(!!errors.slug)}
+              placeholder="product-url-slug"
+              disabled={isSubmitting}
+              onChange={(e) => {
+                if (e.target.value !== generateSlug(name)) {
+                  setIsSlugManuallyEdited(true);
+                }
+              }}
+            />
+            {isSlugManuallyEdited && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSlugManuallyEdited(false);
+                  setValue('slug', generateSlug(name));
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-blue-400 hover:text-blue-300"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+          {errors.slug && (
+            <p className="text-red-400 text-sm mt-1">{errors.slug.message}</p>
+          )}
+          <p className="text-gray-400 text-sm mt-1">
+            {isSlugManuallyEdited ? 
+              "Manually edited - click Reset to auto-generate from name" : 
+              "Automatically generated from name"}
+          </p>
         </div>
 
         {/* Tagline */}
