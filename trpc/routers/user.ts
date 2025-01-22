@@ -10,14 +10,26 @@ export const userRouter = router({
         where: { id: ctx.userId },
         select: {
           name: true,
-          username: true,
+          // username: true,
           bio: true,
           website: true,
           twitter: true,
           github: true,
           avatarUrl: true,
+          email: true,
         },
       });
+      if (!user) {
+        return {
+          name: null,
+          bio: null,
+          website: null,
+          twitter: null,
+          github: null,
+          avatarUrl: null
+        };
+      }
+
       return user;
     }),
 
@@ -40,8 +52,8 @@ export const userRouter = router({
   updateProfile: privateProcedure
     .input(z.object({
       name: z.string().min(1, "Name is required"),
-      username: z.string().min(1, "Username is required")
-        .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+      // username: z.string().min(1, "Username is required")
+      //   .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
       bio: z.string().nullable(),
       website: z.string().url().nullable().or(z.literal('')),
       twitter: z.string()
@@ -56,20 +68,32 @@ export const userRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       // Check if username is already taken (excluding current user)
-      if (input.username) {
-        const existingUser = await db.user.findFirst({
-          where: {
-            username: input.username,
-            NOT: {
-              id: ctx.userId
-            }
-          }
-        });
+      // if (input.username) {
+      //   const existingUser = await db.user.findFirst({
+      //     where: {
+      //       username: input.username,
+      //       NOT: {
+      //         id: ctx.userId
+      //       }
+      //     }
+      //   });
 
-        if (existingUser) {
-          throw new Error("Username is already taken");
-        }
+      //   if (existingUser) {
+      //     throw new Error("Username is already taken");
+      //   }
+      // }
+      const user = await db.user.findUnique({
+        where: { id: ctx.userId },
+        select: { email: true }
+      });
+
+
+      if (!user?.email) {
+        throw new Error("User email not found");
       }
+
+      // Generate a username from email if it doesn't exist
+      const username = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
 
       // Clean up empty string inputs to be null
       const cleanedInput = {
@@ -77,6 +101,8 @@ export const userRouter = router({
         website: input.website || null,
         twitter: input.twitter || null,
         github: input.github || null,
+        // Only set username if updating for first time
+        username: username,
       };
 
       try {
@@ -86,25 +112,56 @@ export const userRouter = router({
         });
 
         return updatedUser;
-      } catch (error) {
+      } catch (error: any) {
+        // Handle unique constraint violation
+        if (error.code === 'P2002' && error.meta?.target?.includes('username')) {
+          // If username already exists, append a random number
+          const randomSuffix = Math.floor(Math.random() * 1000);
+          const alternativeUsername = `${username}${randomSuffix}`;
+
+          const retryUpdate = await db.user.update({
+            where: { id: ctx.userId },
+            data: {
+              ...cleanedInput,
+              username: alternativeUsername
+            },
+          });
+
+          return retryUpdate;
+        }
+
         console.error('Error updating profile:', error);
         throw new Error("Failed to update profile");
       }
     }),
 
   // Check if profile is complete
+  // isProfileComplete: privateProcedure
+  //   .query(async ({ ctx }) => {
+  //     const user = await db.user.findUnique({
+  //       where: { id: ctx.userId },
+  //       select: {
+  //         name: true,
+  //         username: true,
+  //       },
+  //     });
+
+  //     return {
+  //       isComplete: !!(user?.name && user?.username),
+  //       user
+  //     };
+  //   }),
   isProfileComplete: privateProcedure
     .query(async ({ ctx }) => {
       const user = await db.user.findUnique({
         where: { id: ctx.userId },
         select: {
           name: true,
-          username: true,
         },
       });
 
       return {
-        isComplete: !!(user?.name && user?.username),
+        isComplete: !!user?.name,
         user
       };
     }),

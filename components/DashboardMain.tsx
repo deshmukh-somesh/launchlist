@@ -64,7 +64,7 @@ export default function DashboardMain() {
   const router = useRouter();
   const utils = trpc.useContext();
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   // Fetch user profile data
   const { data: profileData, isLoading: isProfileLoading } = trpc.user.getProfile.useQuery();
   const { data: profileStatus } = trpc.user.isProfileComplete.useQuery();
@@ -172,8 +172,8 @@ export default function DashboardMain() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="border-b border-[#2A2B3C]">
-          <TabsTrigger 
-            value="profile" 
+          <TabsTrigger
+            value="profile"
             className="relative"
           >
             Profile
@@ -181,14 +181,14 @@ export default function DashboardMain() {
               <CheckCircle className="h-4 w-4 text-green-500 ml-2" />
             )}
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="products"
             disabled={!isProfileComplete}
             className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
           >
             Products
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="collections"
             disabled={!isProfileComplete}
             className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
@@ -216,17 +216,40 @@ export default function DashboardMain() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : (
-                  <UserProfileForm 
+                  // <UserProfileForm 
+                  //   initialData={profileData || {
+                  //     name: '',
+                  //     // username: '',
+                  //     bio: null,
+                  //     website: null,
+                  //     twitter: null,
+                  //     github: null,
+                  //     avatarUrl: null
+                  //   }}
+                  //   onComplete={() => {
+                  //     toast({
+                  //       title: "Profile Complete!",
+                  //       description: "You can now access all features.",
+                  //       variant: "default",
+                  //     });
+                  //     setActiveTab('products');
+                  //   }}
+                  // />
+                  <UserProfileForm
                     initialData={profileData || {
                       name: '',
-                      username: '',
                       bio: null,
                       website: null,
                       twitter: null,
                       github: null,
                       avatarUrl: null
                     }}
-                    onComplete={() => {
+                    onComplete={async () => {
+                      // Refetch profile status
+                      await utils.user.isProfileComplete.invalidate();
+                      // Wait for the new data
+                      await new Promise(resolve => setTimeout(resolve, 100));
+
                       toast({
                         title: "Profile Complete!",
                         description: "You can now access all features.",
@@ -247,7 +270,7 @@ export default function DashboardMain() {
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg font-semibold text-white">My Products</h2>
-                  <Button 
+                  <Button
                     onClick={() => router.push('/dashboard/products/new')}
                     className="bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]"
                   >
