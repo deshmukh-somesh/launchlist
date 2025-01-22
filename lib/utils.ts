@@ -15,12 +15,12 @@ export function absoluteUrl(path: string) {
 }
 
 export function constructMetadata({
-  title = "PDFaskAI - Chat with PDFs Using Advanced AI | Free PDF Analysis Tool",
-  description = "Transform how you interact with PDFs using PDFaskAI. Upload any PDF and get instant, AI-powered insights and answers. Advanced document analysis, free to use, and secure. Perfect for students, researchers, and professionals.",
+  title = "ProductLaunches - Discover & Vote on Today's Best Products | Daily Product Launch Platform",
+  description = "Join ProductLaunches to discover and vote on the most exciting product launches every day. A community-driven platform showcasing innovative startups, tools, and apps. Launch your product, get feedback, and connect with early adopters.",
   image = "/thumbnail.png",
   icons = "/icon.ico",
   noIndex = false,
-  keywords = "PDF chat, AI PDF analysis, document analysis, PDF assistant, AI document reader, PDF question answering, free PDF tool, PDFaskAI"
+  keywords = "product launches, product hunt alternative, startup launches, daily products, tech products, indie makers, product discovery, startup community, product feedback, launch platform, new products, product voting"
 }: {
   title?:string
   description?:string
@@ -41,11 +41,11 @@ export function constructMetadata({
           url: image,
           width: 1200, 
           height: 630,
-          alt:'PDFaskAI - AI-Powered PDF Analysis Tool'
+          alt:'Product Launches - Discover & Vote on Today\'s Best Products'
         }
       ], 
       type:'website', 
-      siteName: 'PDFaskAI', 
+      siteName: 'Product Launches', 
       locale:'en_US'
     },
     twitter: {
@@ -53,18 +53,18 @@ export function constructMetadata({
       title,
       description,
       images: [image],
-      creator: "@pdfaskai",
-      site: "@pdfaskai",
+      creator: "@productlaunches",
+      site: "@productlaunches",
     },
     icons,
     // metadataBase: new URL('https://pdfaskai.vercel.app/'),
-    metadataBase: new URL('https://pdfaskai.com/'),
+    metadataBase: new URL('https://productlaunches.vercel.app/'),
     alternates: {
-      canonical: 'https://pdfaskai.com/'
+      canonical: 'https://productlaunches.vercel.app/'
     },
     authors:[{
-      name: 'PDFaskAI Team',
-      url: 'https://pdfaskai.com/'
+      name: 'ProductLaunches Team',
+      url: 'https://productlaunches.vercel.app/'
     }],
     ...(noIndex && {
       robots: {
