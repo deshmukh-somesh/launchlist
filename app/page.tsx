@@ -13,6 +13,7 @@ import PastLaunches from "@/components/PastLaunches";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { useRouter } from 'next/navigation';
 import { LoginLink, useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   // scroll at top 
@@ -212,6 +213,7 @@ export default function Home() {
           <ArrowUp className="h-6 w-6 text-[#6E3AFF] relative" />
         </div>
       </button>
+      <Footer />
     </>
   );
 }

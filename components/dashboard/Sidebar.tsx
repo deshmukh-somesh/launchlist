@@ -106,7 +106,7 @@ export function Sidebar() {
               href="/dashboard" 
               className="flex items-center gap-2 px-2"
             >
-              <h1 className="text-xl font-bold text-white">LaunchList</h1>
+              <h1 className="text-xl font-bold text-white">Product Launches</h1>
             </Link>
           </div>
 
