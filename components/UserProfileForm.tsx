@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { toast } from "@/components/ui/use-toast";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2, Edit2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type UserProfileInputs = {
@@ -127,7 +127,10 @@ export default function UserProfileForm({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-white">Profile Information</h2>
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-white">Profile Information</h2>
+        </div>
         <button
           type="button"
           // onClick={() => setIsEditing(!isEditing)}
@@ -192,7 +195,7 @@ export default function UserProfileForm({
             className={inputClassName()}
             placeholder="Tell us about yourself"
             disabled={!isEditing}
-            rows={4}
+            rows={3}
           />
           {errors.bio && (
             <p className="text-red-400 text-sm mt-1">{errors.bio.message}</p>

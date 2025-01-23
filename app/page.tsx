@@ -60,7 +60,7 @@ export default function Home() {
 
   return (
     <>
-      <MaxWidthWrapper className="mb-12 mt-28 sm:mt-25 flex flex-col items-center justify-center text-center">
+      <MaxWidthWrapper className="mb-12 mt-16 sm:mt-16 flex flex-col items-center justify-center text-center">
         {/* Announcement Banner */}
         <div className="mx-auto mb-8 flex max-w-fit items-center justify-center space-x-2 overflow-hidden rounded-full border border-[#2A2B3C] bg-[#151725] px-7 py-2 shadow-md backdrop-blur transition-all hover:border-[#6E3AFF] hover:bg-[#1A1C2E]">
           <Rocket className="h-5 w-5 text-[#6E3AFF]" />
