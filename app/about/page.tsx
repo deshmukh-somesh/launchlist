@@ -10,7 +10,7 @@ export default function AboutPage() {
           <div className="space-y-8 text-gray-400">
             <section className="space-y-4">
               <p className="text-lg text-white">
-                Product Launches is India's premier platform for discovering and launching innovative digital products. We connect talented creators with engaged audiences, providing a spotlight for products that deserve recognition.
+                Product Launches is India&apos;s premier platform for discovering and launching innovative digital products. We connect talented creators with engaged audiences, providing a spotlight for products that deserve recognition.
               </p>
               
               <div className="grid gap-6 md:grid-cols-2 mt-12">
@@ -37,7 +37,7 @@ export default function AboutPage() {
   
                 <div className="bg-[#1A1C2E] p-6 rounded-lg border border-[#2A2B3C]">
                   <h3 className="text-lg font-semibold text-white mb-3">Social Promotion</h3>
-                  <p>Instagram and YouTube Reel creation to amplify your product's reach.</p>
+                  <p>Instagram and YouTube Reel creation to amplify your product&apos;s reach.</p>
                 </div>
   
                 <div className="bg-[#1A1C2E] p-6 rounded-lg border border-[#2A2B3C]">
