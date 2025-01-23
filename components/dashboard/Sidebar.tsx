@@ -106,12 +106,12 @@ export function Sidebar() {
               href="/dashboard" 
               className="flex items-center gap-2 px-2"
             >
-              <h1 className="text-xl font-bold text-white">LaunchList</h1>
+              <h1 className="text-xl font-bold text-white">Product Launches</h1>
             </Link>
           </div>
 
           {/* Navigation Links */}
-          <div className="flex-1 overflow-y-auto py-4 px-3">
+          <div className="flex-1 overflow-y-auto py-4 px-3 mt-6">
             <nav className="space-y-1">
               {routes.map((route) => (
                 <Link

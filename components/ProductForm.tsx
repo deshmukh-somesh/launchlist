@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
@@ -28,9 +28,20 @@ interface ProductFormProps {
   readonly?: boolean;
 }
 
+// Utility function to generate slug from name
+const generateSlug = (name: string) => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Remove consecutive hyphens
+};
+
 export default function ProductForm({ initialData, productId, isEditing = false, readonly = false }: ProductFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!initialData?.slug);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -60,6 +71,14 @@ export default function ProductForm({ initialData, productId, isEditing = false,
   const slug = watch('slug');
   const thumbnail = watch('thumbnail');
 
+
+  // Auto-generate slug when name changes
+  useEffect(() => {
+    if (name && !isSlugManuallyEdited) {
+      const generatedSlug = generateSlug(name);
+      setValue('slug', generatedSlug);
+    }
+  }, [name, setValue, isSlugManuallyEdited]);
   // TRPC queries and mutations [unchanged]
   const { data: duplicateCheck } = trpc.product.checkDuplicate.useQuery(
     {
@@ -174,6 +193,14 @@ export default function ProductForm({ initialData, productId, isEditing = false,
     "text-white placeholder-gray-500"
   );
 
+  const inputWrapper = (hasError: boolean) => cn(
+    inputClasses,
+    hasError
+      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+      : "border-[#2A2B3C] focus:border-[#6E3AFF] focus:ring-[#6E3AFF]/20"
+  );
+
+
   const labelClasses = "block mb-2 text-sm font-medium text-gray-200";
   const errorClasses = "text-red-400 text-sm mt-1";
 
@@ -203,27 +230,61 @@ export default function ProductForm({ initialData, productId, isEditing = false,
               required: "Name is required",
               validate: validateName
             })}
-            className={inputClasses}
+            // className={inputClasses}
+            className={inputWrapper(!!errors.name)}
             placeholder="Enter product name"
-            disabled={readonly}
+            disabled={readonly || isSubmitting}
           />
-          {errors.name && (
+          {/* {errors.name && (
             <p className={errorClasses}>{errors.name.message}</p>
+          )} */}
+          {errors.name && (
+            <p className="text-red-400 text-sm mt-1">{errors.name.message}</p>
           )}
         </div>
 
         {/* Slug Field */}
         <div>
           <label className={labelClasses}>Slug</label>
-          <input
-            {...register("slug", {
-              required: "Slug is required",
-              validate: validateSlug
-            })}
-            className={inputClasses}
-            placeholder="product-url-slug"
-            disabled={readonly}
-          />
+          <div className="relative">
+            <input
+              {...register("slug", {
+                required: "Slug is required",
+                validate: validateSlug
+              })}
+              // className={inputClasses}
+              className={inputWrapper(!!errors.slug)}
+              placeholder="product-url-slug"
+              disabled={readonly || isSubmitting}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value !== generateSlug(name)) {
+                  setIsSlugManuallyEdited(true);
+                }
+              }}
+            />
+
+            {!readonly && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSlugManuallyEdited(false);
+                  setValue('slug', generateSlug(name));
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-blue-400 hover:text-blue-300"
+              >
+                Reset
+              </button>
+            )}
+            {errors.slug && (
+              <p className="text-red-400 text-sm mt-1">{errors.slug.message}</p>
+            )}
+            <p className="text-gray-400 text-sm mt-1">
+              {isSlugManuallyEdited ?
+                "Manually edited - click Reset to auto-generate from name" :
+                "Automatically generated from name"}
+            </p>
+          </div>
           {errors.slug && (
             <p className={errorClasses}>{errors.slug.message}</p>
           )}
@@ -328,7 +389,7 @@ export default function ProductForm({ initialData, productId, isEditing = false,
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Saving...</span>
+                <span>{isEditing ? "Saving..." : "Creating..."}</span>
               </>
             ) : (
               <span>{isEditing ? "Save Changes" : "Create Product"}</span>

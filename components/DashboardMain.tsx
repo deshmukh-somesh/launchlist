@@ -18,6 +18,7 @@ import {
   Loader2,
   UserCircle,
   CheckCircle,
+  User,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -63,12 +64,10 @@ type DashboardProduct = {
 export default function DashboardMain() {
   const router = useRouter();
   const utils = trpc.useContext();
-  const [activeTab, setActiveTab] = useState('profile');
   
-  // Fetch user profile data
+  // Fetch profile status
+  const { data: profileStatus, isLoading: isProfileStatusLoading } = trpc.user.isProfileComplete.useQuery();
   const { data: profileData, isLoading: isProfileLoading } = trpc.user.getProfile.useQuery();
-  const { data: profileStatus } = trpc.user.isProfileComplete.useQuery();
-
   const isProfileComplete = profileStatus?.isComplete;
 
   // Handle tab changes with profile completion check
@@ -79,10 +78,8 @@ export default function DashboardMain() {
         description: "Please complete your profile information before accessing other features.",
         variant: "destructive",
       });
-      setActiveTab('profile');
       return;
     }
-    setActiveTab(value);
   };
 
   // Combine the isPending states into one
@@ -151,8 +148,24 @@ export default function DashboardMain() {
     utils.product.getProductById.prefetch({ id: productId });
   };
 
+  // Add useEffect to handle scroll position
+  useEffect(() => {
+    // Reset scroll position when component mounts
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Show loading state while determining profile status
+  if (isProfileStatusLoading || isProfileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    // Add a wrapper div with a specific className to control initial position
+    <div className="pt-6 space-y-6">
       {/* <DashboardNav /> */}
 
       {/* Profile Completion Banner */}
@@ -170,10 +183,13 @@ export default function DashboardMain() {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <Tabs 
+        defaultValue={isProfileComplete ? 'products' : 'profile'}
+        onValueChange={handleTabChange}
+      >
         <TabsList className="border-b border-[#2A2B3C]">
-          <TabsTrigger 
-            value="profile" 
+          <TabsTrigger
+            value="profile"
             className="relative"
           >
             Profile
@@ -181,14 +197,14 @@ export default function DashboardMain() {
               <CheckCircle className="h-4 w-4 text-green-500 ml-2" />
             )}
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="products"
             disabled={!isProfileComplete}
             className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
           >
             Products
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="collections"
             disabled={!isProfileComplete}
             className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
@@ -199,43 +215,39 @@ export default function DashboardMain() {
 
         <TabsContent value="profile">
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-white">My Profile</h2>
+            <div className="my-4 flex justify-between items-center max-w-4xl mx-auto">
+              <h2 className="text-lg font-semibold text-white"></h2>
               {isProfileComplete && (
                 <div className="flex items-center gap-2 text-green-500">
                   <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm">Profile Complete</span>
+                  <span className="text-sm">
+                    
+                    Profile Complete</span>
                 </div>
               )}
             </div>
 
             <Card className="bg-[#1A1C2E] border-[#2A2B3C]">
               <CardContent className="p-6">
-                {isProfileLoading ? (
-                  <div className="flex justify-center p-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : (
-                  <UserProfileForm 
-                    initialData={profileData || {
-                      name: '',
-                      username: '',
-                      bio: null,
-                      website: null,
-                      twitter: null,
-                      github: null,
-                      avatarUrl: null
-                    }}
-                    onComplete={() => {
-                      toast({
-                        title: "Profile Complete!",
-                        description: "You can now access all features.",
-                        variant: "default",
-                      });
-                      setActiveTab('products');
-                    }}
-                  />
-                )}
+                <UserProfileForm
+                  initialData={profileData || {
+                    name: '',
+                    bio: null,
+                    website: null,
+                    twitter: null,
+                    github: null,
+                    avatarUrl: null
+                  }}
+                  onComplete={async () => {
+                    await utils.user.isProfileComplete.invalidate();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    toast({
+                      title: "Profile Complete!",
+                      description: "You can now access all features.",
+                      variant: "default",
+                    });
+                  }}
+                />
               </CardContent>
             </Card>
           </div>
@@ -245,9 +257,9 @@ export default function DashboardMain() {
           <>
             <TabsContent value="products">
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-white">My Products</h2>
-                  <Button 
+                <div className="flex justify-between items-center max-w-5xl mx-auto">
+                  <h2 className="ml-4 text-lg font-semibold text-white"></h2>
+                  <Button
                     onClick={() => router.push('/dashboard/products/new')}
                     className="bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]"
                   >

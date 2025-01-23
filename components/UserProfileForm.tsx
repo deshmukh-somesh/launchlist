@@ -4,12 +4,12 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { trpc } from "@/app/_trpc/client";
 import { toast } from "@/components/ui/use-toast";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2, Edit2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type UserProfileInputs = {
   name: string | null;
-  username: string;
+  // username: string;
   bio: string | null;
   website: string | null;
   twitter: string | null;
@@ -20,7 +20,7 @@ type UserProfileInputs = {
 export default function UserProfileForm({ 
   initialData = {
     name: '',
-    username: '',
+    // username: '',
     bio: null,
     website: null,
     twitter: null,
@@ -33,20 +33,52 @@ export default function UserProfileForm({
   onComplete?: () => void 
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(!initialData?.name);
   
-  const { register, handleSubmit, formState: { errors, isDirty } } = useForm<UserProfileInputs>({
-    defaultValues: initialData
+  const { register, handleSubmit,reset, formState: { errors, isDirty } } = useForm<UserProfileInputs>({
+    defaultValues: initialData,
+    mode: 'onBlur'// validate on blur for better ux 
   });
 
   const utils = trpc.useContext();
+  // const updateProfile = trpc.user.updateProfile.useMutation({
+  //   onSuccess: async () => {
+  //     toast({
+  //       title: 'Profile updated successfully!',
+  //       variant: 'default',
+  //     });
+  //     await utils.user.getProfile.invalidate();
+  //     setIsEditing(false);
+  //     onComplete?.();
+  //   },
+  //   onError: (error) => {
+  //     toast({
+  //       title: 'Error updating profile',
+  //       description: error.message,
+  //       variant: 'destructive',
+  //     });
+  //     setIsSubmitting(false);
+  //   }
+  // });
+
   const updateProfile = trpc.user.updateProfile.useMutation({
     onSuccess: async () => {
+      // Invalidate both profile and status queries
+      await Promise.all([
+        utils.user.getProfile.invalidate(),
+        utils.user.isProfileComplete.invalidate()
+      ]);
+      
       toast({
         title: 'Profile updated successfully!',
         variant: 'default',
       });
-      await utils.user.getProfile.invalidate();
+
+      setIsEditing(false);
+      setIsSubmitting(false);
+      
+      // Add a small delay to ensure queries are refetched
+      await new Promise(resolve => setTimeout(resolve, 100));
       onComplete?.();
     },
     onError: (error) => {
@@ -59,12 +91,19 @@ export default function UserProfileForm({
     }
   });
 
+  const handleEditToggle = () => {
+    if (isEditing) {
+      reset(initialData);
+    }
+    setIsEditing(!isEditing);
+  };
+
   const onSubmit = async (data: UserProfileInputs) => {
     setIsSubmitting(true);
     try {
       await updateProfile.mutateAsync({
         name: data.name || '',
-        username: data.username,
+        // username: data.username,
         bio: data.bio || null,
         website: data.website || null,
         twitter: data.twitter || null,
@@ -73,18 +112,29 @@ export default function UserProfileForm({
       });
     } catch (error) {
       console.error('Error updating profile:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    } 
+    // finally {
+    //   setIsSubmitting(false);
+    // }
   };
+
+  const inputClassName = (hasError?: boolean) => cn(
+    "w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg",
+    !isEditing && "opacity-75 cursor-not-allowed",
+    hasError && "border-red-400"
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-white">Profile Information</h2>
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-white">Profile Information</h2>
+        </div>
         <button
           type="button"
-          onClick={() => setIsEditing(!isEditing)}
+          // onClick={() => setIsEditing(!isEditing)}
+          onClick={handleEditToggle}
           className="flex items-center gap-2 text-sm text-gray-400 hover:text-white"
         >
           <Edit2 className="h-4 w-4" />
@@ -100,10 +150,11 @@ export default function UserProfileForm({
           </label>
           <input
             {...register("name", { required: "Name is required" })}
-            className={cn(
-              "w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg",
-              !isEditing && "opacity-75 cursor-not-allowed"
-            )}
+            // className={cn(
+            //   "w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg",
+            //   !isEditing && "opacity-75 cursor-not-allowed"
+            // )}
+            className={inputClassName(!!errors.name)}
             placeholder="Your display name"
             disabled={!isEditing}
           />
@@ -113,7 +164,7 @@ export default function UserProfileForm({
         </div>
 
         {/* Username */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-200 mb-2">
             Username
           </label>
@@ -129,7 +180,7 @@ export default function UserProfileForm({
           {errors.username && (
             <p className="text-red-400 text-sm mt-1">{errors.username.message}</p>
           )}
-        </div>
+        </div> */}
 
         {/* Bio */}
         <div>
@@ -137,10 +188,18 @@ export default function UserProfileForm({
             Bio
           </label>
           <textarea
+            // {...register("bio")}
+            // className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg min-h-[100px]"
+            // placeholder="Tell us about yourself"
             {...register("bio")}
-            className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg min-h-[100px]"
+            className={inputClassName()}
             placeholder="Tell us about yourself"
+            disabled={!isEditing}
+            rows={3}
           />
+          {errors.bio && (
+            <p className="text-red-400 text-sm mt-1">{errors.bio.message}</p>
+          )}
         </div>
 
         {/* Social Links */}
@@ -154,8 +213,10 @@ export default function UserProfileForm({
             <input
               {...register("website")}
               type="url"
-              className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg"
+              // className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg"
+              className={inputClassName()}
               placeholder="https://your-website.com"
+              disabled={!isEditing}
             />
           </div>
 
@@ -164,9 +225,13 @@ export default function UserProfileForm({
               Twitter
             </label>
             <input
+              // {...register("twitter")}
+              // className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg"
+              // placeholder="@twitter_handle"
               {...register("twitter")}
-              className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg"
+              className={inputClassName()}
               placeholder="@twitter_handle"
+              disabled={!isEditing}
             />
           </div>
 
@@ -175,9 +240,13 @@ export default function UserProfileForm({
               GitHub
             </label>
             <input
+              // {...register("github")}
+              // className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg"
+              // placeholder="github_username"
               {...register("github")}
-              className="w-full p-3 bg-[#151725] border border-[#2A2B3C] rounded-lg"
+              className={inputClassName()}
               placeholder="github_username"
+              disabled={!isEditing}
             />
           </div>
         </div>
