@@ -3,6 +3,8 @@
 
 import Link from "next/link";
 import { Github, Twitter, Heart, Instagram, Linkedin } from "lucide-react";
+import Image from "next/image";
+
 
 export function Footer() {
   return (
@@ -10,10 +12,14 @@ export function Footer() {
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Column */}
-          <div className="space-y-4">
+          <div className="space-y-4">   
+            <div className="flex items-center gap-2">
+
+            <Image src="/finalbabu.svg" alt="Product Launches" width={24} height={24} />
             <h3 className="text-lg font-bold bg-gradient-to-r from-[#6E3AFF] to-[#2563EB] text-transparent bg-clip-text">
               Product Launches
             </h3>
+            </div>
             <p className="text-sm text-gray-400">
               Discover & share amazing digital products with the world.
             </p>

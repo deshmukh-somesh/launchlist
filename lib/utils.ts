@@ -58,13 +58,13 @@ export function constructMetadata({
     },
     icons,
     // metadataBase: new URL('https://pdfaskai.vercel.app/'),
-    metadataBase: new URL('https://productlaunches.vercel.app/'),
+    metadataBase: new URL('https://www.productlaunches.in/'),
     alternates: {
-      canonical: 'https://productlaunches.vercel.app/'
+      canonical: 'https://www.productlaunches.in/'
     },
     authors:[{
       name: 'ProductLaunches Team',
-      url: 'https://productlaunches.vercel.app/'
+      url: 'https://www.productlaunches.in/'
     }],
     ...(noIndex && {
       robots: {
