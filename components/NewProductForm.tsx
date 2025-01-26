@@ -8,6 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 import { ThumbnailUploader } from "./ThumbnailUploader";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CategorySelect } from "./CategorySelect";
 
 type FormInputs = {
   name: string;
@@ -19,6 +20,7 @@ type FormInputs = {
   launchDate: string;
   isLaunched: boolean;
   thumbnail: string | null;
+  categories: string[];
 };
 
 // Utility function to generate slug from name
@@ -35,6 +37,7 @@ export default function NewProductForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -56,7 +59,8 @@ export default function NewProductForm() {
       tagline: '',
       description: '',
       website: '',
-      isLaunched: false
+      isLaunched: false,
+      categories: []
     }
   });
 
@@ -96,7 +100,7 @@ export default function NewProductForm() {
     try {
       await createProduct.mutateAsync({
         ...data,
-        categoryIds: [],
+        categoryIds: selectedCategories,
         images: [],
         isLaunched: false
       });
@@ -299,6 +303,24 @@ export default function NewProductForm() {
           />
           {errors.launchDate && (
             <p className="text-red-400 text-sm mt-1">{errors.launchDate.message}</p>
+          )}
+        </div>
+
+        {/* Categories */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Categories
+          </label>
+          <CategorySelect
+            selectedCategories={selectedCategories}
+            onSelect={(categoryIds) => {
+              setSelectedCategories(categoryIds);
+              setValue('categories', categoryIds);
+            }}
+            disabled={isSubmitting}
+          />
+          {errors.categories && (
+            <p className="text-red-400 text-sm mt-1">{errors.categories.message}</p>
           )}
         </div>
 

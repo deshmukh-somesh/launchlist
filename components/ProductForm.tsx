@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/use-toast";
 import { ThumbnailUploader } from "./ThumbnailUploader";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CategorySelect } from "./CategorySelect";
 
 export type ProductFormInputs = {
   name: string;
@@ -19,6 +20,7 @@ export type ProductFormInputs = {
   launchDate: string;
   isLaunched: boolean;
   thumbnail: string | null;
+  categories: string[]; // Array of category IDs
 };
 
 interface ProductFormProps {
@@ -42,6 +44,9 @@ export default function ProductForm({ initialData, productId, isEditing = false,
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!initialData?.slug);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialData?.categories || []
+  );
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -63,7 +68,8 @@ export default function ProductForm({ initialData, productId, isEditing = false,
       tagline: '',
       description: '',
       website: '',
-      isLaunched: false
+      isLaunched: false,
+      categories: []
     }
   });
 
@@ -162,19 +168,17 @@ export default function ProductForm({ initialData, productId, isEditing = false,
         await updateProduct.mutateAsync({
           id: productId,
           ...data,
-          categoryIds: [],
+          categoryIds: selectedCategories,
           images: [],
-
         });
       } else {
         await createProduct.mutateAsync({
           ...data,
-          categoryIds: [],
+          categoryIds: selectedCategories,
           images: [],
           isLaunched: false,
-        })
+        });
       }
-
     } catch (error) {
       console.error(`Error creating product: ${error}`);
       toast({
@@ -370,6 +374,22 @@ export default function ProductForm({ initialData, productId, isEditing = false,
           />
           {errors.launchDate && (
             <p className={errorClasses}>{errors.launchDate.message}</p>
+          )}
+        </div>
+
+        {/* Categories Field */}
+        <div>
+          <label className={labelClasses}>Categories</label>
+          <CategorySelect
+            selectedCategories={selectedCategories}
+            onSelect={(categoryIds) => {
+              setSelectedCategories(categoryIds);
+              setValue('categories', categoryIds);
+            }}
+            disabled={readonly || isSubmitting}
+          />
+          {errors.categories && (
+            <p className={errorClasses}>{errors.categories.message}</p>
           )}
         </div>
 

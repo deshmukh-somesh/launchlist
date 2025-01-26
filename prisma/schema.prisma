@@ -29,26 +29,25 @@ model User {
 }
 
 model Product {
-  id            String                  @id @default(cuid())
-  name          String
-  slug          String                  @unique
-  tagline       String
-  description   String
-  website       String
-  thumbnail     String?
-  pricing       PricingType             @default(FREE)
-  launchDate    DateTime
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  isLaunched    Boolean                 @default(false)
-  makerId       String
-
-  categories    CategoriesOnProducts[]
-  collections   CollectionsOnProducts[]
-  comments      Comment[]
-  maker         User                    @relation(fields: [makerId], references: [id])
-  images        ProductImage[]
-  votes         Vote[]
+  id          String                  @id @default(cuid())
+  name        String
+  slug        String                  @unique
+  tagline     String
+  description String
+  website     String
+  thumbnail   String?
+  pricing     PricingType             @default(FREE)
+  launchDate  DateTime
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  isLaunched  Boolean                 @default(false)
+  makerId     String
+  categories  CategoriesOnProducts[]
+  collections CollectionsOnProducts[]
+  comments    Comment[]
+  maker       User                    @relation(fields: [makerId], references: [id])
+  images      ProductImage[]
+  votes       Vote[]
 }
 
 model ProductImage {
@@ -59,15 +58,22 @@ model ProductImage {
 }
 
 model Category {
-  id          String                 @id @default(cuid())
-  name        String                 @unique
-  description String?
-  products    CategoriesOnProducts[]
+  id            String                 @id @default(cuid())
+  name          String                 @unique
+  description   String?
+  order         Int                    @default(0) // Add this
+  parentId      String? // Add this
+  updatedAt     DateTime               @updatedAt
+  products      CategoriesOnProducts[]
+  parent        Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id]) // Add this
+  subcategories Category[]             @relation("CategoryHierarchy") // Add this
 }
 
 model CategoriesOnProducts {
   productId  String
   categoryId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   category   Category @relation(fields: [categoryId], references: [id])
   product    Product  @relation(fields: [productId], references: [id])
 

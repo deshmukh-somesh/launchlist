@@ -110,9 +110,10 @@ export default function EditProductPage() {
     website: product.website,
     pricing: product.pricing,
     launchDate: new Date(product.launchDate).toISOString().split('T')[0],
-    launchTime: new Date(product.launchDate).toTimeString().slice(0,5), // HH:MM
+    // launchTime: new Date(product.launchDate).toTimeString().slice(0,5), // HH:MM
     isLaunched: product.isLaunched,
-    thumbnail: product.thumbnail || ''
+    thumbnail: product.thumbnail || '',
+    categories: product.categories.map(cat => cat.categoryId)
   };
 
   return (
