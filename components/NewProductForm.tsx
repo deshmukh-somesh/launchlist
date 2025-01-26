@@ -246,6 +246,24 @@ export default function NewProductForm() {
           )}
         </div>
 
+        {/* Categories */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-2">
+            Categories
+          </label>
+          <CategorySelect
+            selectedCategories={selectedCategories}
+            onSelect={(categoryIds) => {
+              setSelectedCategories(categoryIds);
+              setValue('categories', categoryIds);
+            }}
+            disabled={isSubmitting}
+          />
+          {errors.categories && (
+            <p className="text-red-400 text-sm mt-1">{errors.categories.message}</p>
+          )}
+        </div>
+        
         {/* Website */}
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-2">
@@ -306,23 +324,6 @@ export default function NewProductForm() {
           )}
         </div>
 
-        {/* Categories */}
-        <div>
-          <label className="block text-sm font-medium text-gray-200 mb-2">
-            Categories
-          </label>
-          <CategorySelect
-            selectedCategories={selectedCategories}
-            onSelect={(categoryIds) => {
-              setSelectedCategories(categoryIds);
-              setValue('categories', categoryIds);
-            }}
-            disabled={isSubmitting}
-          />
-          {errors.categories && (
-            <p className="text-red-400 text-sm mt-1">{errors.categories.message}</p>
-          )}
-        </div>
 
         {/* Submit Button */}
         <button
