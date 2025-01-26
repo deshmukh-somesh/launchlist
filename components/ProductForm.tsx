@@ -323,6 +323,22 @@ export default function ProductForm({ initialData, productId, isEditing = false,
           )}
         </div>
 
+        {/* Categories Field */}
+        <div>
+          <label className={labelClasses}>Categories</label>
+          <CategorySelect
+            selectedCategories={selectedCategories}
+            onSelect={(categoryIds) => {
+              setSelectedCategories(categoryIds);
+              setValue('categories', categoryIds);
+            }}
+            disabled={readonly || isSubmitting}
+          />
+          {errors.categories && (
+            <p className={errorClasses}>{errors.categories.message}</p>
+          )}
+        </div>
+        
         {/* Website Field */}
         <div>
           <label className={labelClasses}>Website</label>
@@ -377,21 +393,6 @@ export default function ProductForm({ initialData, productId, isEditing = false,
           )}
         </div>
 
-        {/* Categories Field */}
-        <div>
-          <label className={labelClasses}>Categories</label>
-          <CategorySelect
-            selectedCategories={selectedCategories}
-            onSelect={(categoryIds) => {
-              setSelectedCategories(categoryIds);
-              setValue('categories', categoryIds);
-            }}
-            disabled={readonly || isSubmitting}
-          />
-          {errors.categories && (
-            <p className={errorClasses}>{errors.categories.message}</p>
-          )}
-        </div>
 
         {/* Submit Button */}
         {!readonly && (
