@@ -154,6 +154,24 @@ export default function DashboardMain() {
     window.scrollTo(0, 0);
   }, []);
 
+  // Add new mutation hook
+  const cancelLaunch = trpc.product.cancelLaunch.useMutation({
+    onSuccess: async () => {
+      toast({
+        title: 'Launch cancelled successfully!',
+        variant: 'default',
+      });
+      await utils.product.getDashboardProducts.invalidate();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error cancelling launch',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Show loading state while determining profile status
   if (isProfileStatusLoading || isProfileLoading) {
     return (
@@ -262,6 +280,7 @@ export default function DashboardMain() {
                   <Button
                     onClick={() => router.push('/dashboard/products/new')}
                     className="bg-gradient-to-r from-[#6E3AFF] to-[#2563EB]"
+                    title="Launch dates must be within the next 14 days"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     New Product
@@ -333,7 +352,29 @@ export default function DashboardMain() {
                               </div>
 
                               <div className="flex gap-2 mt-4">
-                                {!product.isLaunched ? (
+                                {product.isLaunched ? (
+                                  <div className="flex gap-2 items-center">
+                                    {!isPast(new Date(product.launchDate)) && (
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => cancelLaunch.mutate({ productId: product.id })}
+                                        className="text-red-500 hover:text-red-600"
+                                      >
+                                        Cancel Launch
+                                      </Button>
+                                    )}
+                                    <Link href={`/products/${product.slug}`}>
+                                      <Button variant="default">
+                                        <Rocket className="h-4 w-4 mr-2" />
+                                        View Live
+                                      </Button>
+                                    </Link>
+                                    <span className="text-sm text-green-600 flex items-center gap-1">
+                                      <Rocket className="h-4 w-4" />
+                                      Launched
+                                    </span>
+                                  </div>
+                                ) : (
                                   <>
                                     <Link href={`/dashboard/products/${product.id}/edit`}>
                                       <Button variant="outline">
@@ -375,30 +416,6 @@ export default function DashboardMain() {
                                       </AlertDialogContent>
                                     </AlertDialog>
                                   </>
-                                ) : (
-                                  <div className="flex gap-2 items-center">
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setSelectedProduct(product);
-                                        setIsViewModalOpen(true);
-                                      }}
-                                      onMouseEnter={() => prefetchProduct(product.id)}
-                                    >
-                                      <Eye className="h-4 w-4 mr-2" />
-                                      View Form
-                                    </Button>
-                                    <Link href={`/products/${product.slug}`}>
-                                      <Button variant="default">
-                                        <Rocket className="h-4 w-4 mr-2" />
-                                        View Live
-                                      </Button>
-                                    </Link>
-                                    <span className="text-sm text-green-600 flex items-center gap-1">
-                                      <Rocket className="h-4 w-4" />
-                                      Launched
-                                    </span>
-                                  </div>
                                 )}
                               </div>
                             </div>
