@@ -35,6 +35,7 @@ interface ProductCardProps {
             name: string | null;
             avatarUrl: string | null;
             username: string | null;
+            twitter: string | null;
         };
         _count?: {
             votes: number;
@@ -199,6 +200,7 @@ export default function ProductCard({ product, variant = 'default', rank, isTied
                             >
                                 {product.name}
                             </Link>
+                            <Link href={`https://twitter.com/${product.maker.twitter}`} target="_blank" rel="noopener noreferrer" className=" hover:text-[#6E3AFF] mt-1.3 block text-gray-400 text-xs sm:text-xs">{product.maker.twitter ? `@${product.maker.twitter}` : ''}</Link>
                             <p className="mt-1.5 text-gray-400 text-sm sm:text-base line-clamp-2">{product.tagline}</p>
                         </div>
 
@@ -212,16 +214,16 @@ export default function ProductCard({ product, variant = 'default', rank, isTied
                                         className={cn(
                                             "flex flex-col items-center gap-1 py-1 px-2",
                                             "rounded-lg transition-all duration-200",
-                                            disableVoting 
-                                                ? "opacity-50 cursor-not-allowed" 
+                                            disableVoting
+                                                ? "opacity-50 cursor-not-allowed"
                                                 : "hover:bg-[#2A2B3C]/50"
                                         )}
                                     >
-                                        <Heart 
+                                        <Heart
                                             className={cn(
                                                 "w-5 h-5",
                                                 hasVoted ? "fill-[#6E3AFF] text-[#6E3AFF]" : "text-gray-400"
-                                            )} 
+                                            )}
                                         />
                                         <span className={cn(
                                             "text-xs",
@@ -300,7 +302,6 @@ export default function ProductCard({ product, variant = 'default', rank, isTied
                             <span className="text-sm text-gray-400 hover:text-gray-300 transition-colors">
                                 {/* {product.maker.name || product.maker.username || 'Anonymous'} */}
                                 {product.maker.name}
-                                
                             </span>
                         </div>
                     </div>
