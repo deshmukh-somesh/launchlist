@@ -74,7 +74,8 @@ export default function YesterdayWinners() {
                       maker: {
                         name: product.maker.name,
                         avatarUrl: product.maker.avatarUrl,
-                        username: product.maker.username
+                        username: product.maker.username,
+                        twitter: product.maker.twitter
                       },
                       _count: {
                         votes: product._count?.votes || 0,
