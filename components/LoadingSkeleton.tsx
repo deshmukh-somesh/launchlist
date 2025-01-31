@@ -1,8 +1,9 @@
 import { Card, CardContent } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
+import  MaxWidthWrapper  from "@/components/MaxWidthWrapper";
 
 interface LoadingSkeletonProps {
-  variant?: 'upcoming' | 'winner' | 'yesterday' | 'default';
+  variant?: 'upcoming' | 'winner' | 'yesterday' | 'default' | 'product';
 }
 
 export default function LoadingSkeleton({ variant = 'default' }: LoadingSkeletonProps) {
@@ -18,6 +19,35 @@ export default function LoadingSkeleton({ variant = 'default' }: LoadingSkeleton
         return "Past Launches";
     }
   };
+
+  if (variant === 'product') {
+    return (
+      <MaxWidthWrapper className="py-10">
+        <div className="bg-[#151725] rounded-xl border border-[#2A2B3C] p-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="w-full md:w-1/3">
+              <div className="w-full aspect-video bg-[#1A1C2E] rounded-lg animate-pulse" />
+            </div>
+            <div className="flex-1 space-y-4">
+              <div className="h-8 bg-[#1A1C2E] rounded-lg w-3/4 animate-pulse" />
+              <div className="h-6 bg-[#1A1C2E] rounded-lg w-1/2 animate-pulse" />
+              <div className="flex gap-2">
+                <div className="h-6 bg-[#1A1C2E] rounded-full w-20 animate-pulse" />
+                <div className="h-6 bg-[#1A1C2E] rounded-full w-20 animate-pulse" />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-[#1A1C2E] rounded-full animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 bg-[#1A1C2E] rounded w-24 animate-pulse" />
+                  <div className="h-3 bg-[#1A1C2E] rounded w-20 animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </MaxWidthWrapper>
+    );
+  }
 
   return (
     <div className="py-12 relative">
