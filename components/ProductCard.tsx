@@ -35,6 +35,7 @@ interface ProductCardProps {
             name: string | null;
             avatarUrl: string | null;
             username: string | null;
+            twitter: string | null;
         };
         _count?: {
             votes: number;
@@ -297,11 +298,22 @@ export default function ProductCard({ product, variant = 'default', rank, isTied
                                     </AvatarFallback>
                                 )}
                             </Avatar>
-                            <span className="text-sm text-gray-400 hover:text-gray-300 transition-colors">
-                                {/* {product.maker.name || product.maker.username || 'Anonymous'} */}
-                                {product.maker.name}
-                                
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-400 hover:text-gray-300 transition-colors">
+                                    {product.maker.name}
+                                </span>
+                                {product.maker.twitter && (
+                                    <a
+                                        href={`https://twitter.com/${product.maker.twitter}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-sm text-[#1DA1F2] hover:text-[#1DA1F2]/80 transition-colors"
+                                    >
+                                        @{product.maker.twitter}
+                                    </a>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

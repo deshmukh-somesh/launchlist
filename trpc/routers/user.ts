@@ -39,7 +39,13 @@ export const userRouter = router({
     .query(async ({ ctx, input }) => {
       const user = await db.user.findUnique({
         where: { username: input.username },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          bio: true,
+          avatarUrl: true,
+          twitter: true,
           products: true,
           followers: true,
           following: true,

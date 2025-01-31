@@ -104,7 +104,8 @@ export const productRouter = router({
           select: {
             name: true,
             avatarUrl: true,
-            username: true
+            username: true,
+            twitter: true
           }
         },
         _count: {
@@ -178,7 +179,8 @@ export const productRouter = router({
           select: {
             name: true,
             avatarUrl: true,
-            username: true
+            username: true,
+            twitter: true
           }
         },
         _count: {
@@ -245,6 +247,7 @@ export const productRouter = router({
             name: true,
             avatarUrl: true,
             username: true,
+            twitter: true
           }
         },
         _count: {
@@ -290,7 +293,8 @@ export const productRouter = router({
           select: {
             name: true,
             username: true,
-            avatarUrl: true
+            avatarUrl: true,
+            twitter: true
           }
         },
         _count: {
@@ -525,6 +529,7 @@ export const productRouter = router({
             select: {
               name: true,
               avatarUrl: true,
+              twitter: true
             },
           },
           _count: {
@@ -818,7 +823,8 @@ export const productRouter = router({
             select: {
               name: true,
               avatarUrl: true,
-              username: true
+              username: true,
+              twitter: true
             }
           },
           _count: {
@@ -979,5 +985,27 @@ export const productRouter = router({
           isLaunched: true
         }
       });
+    }),
+
+  // Example for getProduct procedure
+  getProduct: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const product = await db.product.findUnique({
+        where: { slug: input.slug },
+        include: {
+          maker: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatarUrl: true,
+              twitter: true,
+            }
+          },
+          // ... rest of the include options
+        }
+      });
+      // ... rest of the query
     }),
 }); 
