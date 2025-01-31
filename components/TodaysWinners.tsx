@@ -31,6 +31,7 @@ type Product = {
     name: string | null;
     username: string | null;
     avatarUrl: string | null;
+    twitter: string | null;
   };
   _count: {
     votes: number;
