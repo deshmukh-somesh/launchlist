@@ -7,20 +7,16 @@ import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { observable } from '@trpc/server/observable';
 import { EventEmitter } from 'events';
 
-function getUTCDay() {
-  const now = new Date();
-  // Create UTC start of day
-  const utcStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-  // Create UTC end of day
-  const utcEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-
-  console.log({
-    currentUTC: now.toISOString(),
-    utcDayStart: utcStart.toISOString(),
-    utcDayEnd: utcEnd.toISOString()
-  });
-
-  return { now, utcStart, utcEnd };
+// Helper function to get UTC dates
+function getUTCDate(date: Date) {
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
+  ));
 }
 
 const voteEvents = new EventEmitter();
@@ -54,9 +50,14 @@ export const productRouter = router({
       });
       if (!product) throw new Error('Product not found');
       if (product.isLaunched) throw new Error('Product already launched');
-      if (isPast(product.launchDate)) {
-        throw new Error('Launch date has passed');
+
+      const nowUTC = getUTCDate(new Date());
+      const productLaunchUTC = getUTCDate(new Date(product.launchDate));
+      
+      if (productLaunchUTC < nowUTC) {
+        throw new Error('Launch date has passed (UTC)');
       }
+
       return db.product.update({
         where: { id: input.productId },
         data: { isLaunched: true },
@@ -444,9 +445,13 @@ export const productRouter = router({
       thumbnail: z.string().nullable(),
       pricing: z.enum(['FREE', 'PAID', 'SUBSCRIPTION']),
       launchDate: z.string()
-        .transform((str) => new Date(str))
-        .refine((date) => date > new Date(), {
-          message: "Launch date must be in the future"
+        .transform((str) => getUTCDate(new Date(str)))
+        .refine((date) => {
+          const nowUTC = getUTCDate(new Date());
+          const maxDateUTC = getUTCDate(addDays(nowUTC, 14));
+          return date > nowUTC && date <= maxDateUTC;
+        }, {
+          message: "Launch date must be between tomorrow and 14 days from now (UTC)"
         }),
       categoryIds: z.array(z.string()),
       images: z.array(z.string()).optional(),
@@ -654,7 +659,15 @@ export const productRouter = router({
       website: z.string().url(),
       thumbnail: z.string().nullable(),
       pricing: z.enum(['FREE', 'PAID', 'SUBSCRIPTION']),
-      launchDate: z.string().transform((str) => new Date(str)),
+      launchDate: z.string()
+        .transform((str) => getUTCDate(new Date(str)))
+        .refine((date) => {
+          const nowUTC = getUTCDate(new Date());
+          const maxDateUTC = getUTCDate(addDays(nowUTC, 14));
+          return date > nowUTC && date <= maxDateUTC;
+        }, {
+          message: "Launch date must be between tomorrow and 14 days from now (UTC)"
+        }),
       categoryIds: z.array(z.string()),
       images: z.array(z.string()).optional(),
     }))
@@ -835,28 +848,29 @@ export const productRouter = router({
 
   // Get next launch for countdown
   getNextLaunch: publicProcedure.query(async () => {
-    const now = new Date();
-    const currentUTCHour = now.getUTCHours();
+    const nowUTC = getUTCDate(new Date());
+    const maxDateUTC = getUTCDate(addDays(nowUTC, 14));
+    const currentUTCHour = nowUTC.getUTCHours();
     
     // If before 21:00 UTC, get next launch today
     if (currentUTCHour < 21) {
       const todayStartUTC = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
+        nowUTC.getUTCFullYear(),
+        nowUTC.getUTCMonth(),
+        nowUTC.getUTCDate(),
         0, 0, 0
       ));
       const todayEndUTC = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
+        nowUTC.getUTCFullYear(),
+        nowUTC.getUTCMonth(),
+        nowUTC.getUTCDate(),
         23, 59, 59, 999
       ));
 
       const nextLaunch = await db.product.findFirst({
         where: {
           launchDate: {
-            gte: now,
+            gte: nowUTC,
             lte: todayEndUTC
           },
           isLaunched: true
@@ -873,23 +887,17 @@ export const productRouter = router({
       if (nextLaunch) {
         return {
           ...nextLaunch,
-          isVotingEnd: false // During the day, we're counting down to voting end
+          isVotingEnd: false
         };
       }
     }
 
-    // After 21:00 UTC or no more launches today, return tomorrow's first launch
-    const tomorrowStartUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0, 0, 0
-    ));
-
+    // Get next day's first launch within the 14-day limit
     const nextDayLaunch = await db.product.findFirst({
       where: {
         launchDate: {
-          gte: tomorrowStartUTC
+          gt: nowUTC,
+          lte: maxDateUTC
         },
         isLaunched: true
       },
@@ -905,9 +913,10 @@ export const productRouter = router({
     if (nextDayLaunch) {
       return {
         ...nextDayLaunch,
-        isVotingEnd: true // After 21:00 UTC, we're counting down to next day's launch
+        isVotingEnd: true
       };
     }
+
     return null;
   }),
 
@@ -941,4 +950,34 @@ export const productRouter = router({
     }),
 
   // Update your toggleVote mutation to emit events
+
+  // Add new cancelLaunch mutation
+  cancelLaunch: privateProcedure
+    .input(z.object({ productId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const product = await db.product.findUnique({
+        where: { id: input.productId }
+      });
+
+      if (!product) throw new Error('Product not found');
+      if (!product.isLaunched) throw new Error('Product is not launched');
+      
+      const nowUTC = getUTCDate(new Date());
+      const productLaunchUTC = getUTCDate(new Date(product.launchDate));
+      
+      // Check if launch date has passed
+      if (productLaunchUTC < nowUTC) {
+        throw new Error('Cannot cancel launch after launch date has passed (UTC)');
+      }
+
+      return db.product.update({
+        where: { id: input.productId },
+        data: { isLaunched: false },
+        select: {
+          id: true,
+          slug: true,
+          isLaunched: true
+        }
+      });
+    }),
 }); 
