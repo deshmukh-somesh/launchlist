@@ -1003,9 +1003,50 @@ export const productRouter = router({
               twitter: true,
             }
           },
-          // ... rest of the include options
+          categories: {
+            select: {
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
+            }
+          },
+          images: true,
+          _count: {
+            select: {
+              votes: true,
+              comments: true,
+            }
+          }
         }
       });
-      // ... rest of the query
+
+      if (!product) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Product not found',
+        });
+      }
+
+      // Check if the current user has voted for this product
+      let hasVoted = false;
+      if (ctx.userId) {
+        const vote = await db.vote.findUnique({
+          where: {
+            userId_productId: {
+              userId: ctx.userId,
+              productId: product.id,
+            }
+          }
+        });
+        hasVoted = !!vote;
+      }
+
+      return {
+        ...product,
+        hasVoted,
+      };
     }),
 }); 
