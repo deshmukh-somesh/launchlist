@@ -14,6 +14,8 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { useRouter } from 'next/navigation';
 import { LoginLink, useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { Footer } from "@/components/Footer";
+import compactBadges from "@/public/productlaunches-badges-clean.svg";
+import Image from "next/image";
 
 export default function Home() {
   // scroll at top 
@@ -68,6 +70,10 @@ export default function Home() {
           <p className="text-sm font-semibold text-white">
             Product Launches is now Public! 🚀
           </p>
+        </div>
+
+        <div className="mb-8">
+          <Image src={compactBadges} alt="Product Launches Logo" width={1000} height={1000} />
         </div>
 
         {/* Stats Grid */}
