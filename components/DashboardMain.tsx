@@ -224,7 +224,8 @@ export default function DashboardMain() {
           </TabsTrigger>
           <TabsTrigger
             value="collections"
-            disabled={!isProfileComplete}
+            // disabled={!isProfileComplete}
+            disabled={true}
             className={!isProfileComplete ? "opacity-50 cursor-not-allowed" : ""}
           >
             Collections

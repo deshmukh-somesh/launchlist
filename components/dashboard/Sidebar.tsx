@@ -8,7 +8,7 @@ import {
   Rocket,
   FolderHeart,
   Bell,
-  Settings,
+  // Settings,
   Plus,
   Menu,
   X,
@@ -18,36 +18,37 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 const routes = [
-  {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/dashboard",
-    color: "text-sky-500",
-  },
+  // {
+  //   label: "Dashboard",
+  //   icon: LayoutDashboard,
+  //   href: "/dashboard",
+  //   color: "text-sky-500",
+  // },
   {
     label: "My Products",
     icon: Rocket,
-    href: "/dashboard/products",
+    href: "/dashboard",
     color: "text-violet-500",
-  },
-  {
-    label: "Collections",
-    icon: FolderHeart,
-    href: "/dashboard/collections",
-    color: "text-pink-500",
-  },
-  {
-    label: "Notifications",
-    icon: Bell,
-    href: "/dashboard/notifications",
-    color: "text-orange-500",
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-    href: "/dashboard/settings",
-    color: "text-gray-500",
-  },
+  }
+  // ,
+  // {
+  //   label: "Collections",
+  //   icon: FolderHeart,
+  //   href: "/dashboard/collections",
+  //   color: "text-pink-500",
+  // },
+  // {
+  //   label: "Notifications",
+  //   icon: Bell,
+  //   href: "/dashboard/notifications",
+  //   color: "text-orange-500",
+  // },
+  // {
+  //   label: "Settings",
+  //   icon: Settings,
+  //   href: "/dashboard/settings",
+  //   color: "text-gray-500",
+  // },
 ];
 
 export function Sidebar() {
@@ -137,7 +138,7 @@ export function Sidebar() {
           {/* Submit Product Button */}
           <div className="p-4 border-t border-[#2A2B3C]">
             <Link
-              href="/submit"
+              href="/dashboard/products/new"
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg",
                 "text-sm font-medium text-white",
