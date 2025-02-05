@@ -69,6 +69,7 @@ export default function DashboardMain() {
   const { data: profileStatus, isLoading: isProfileStatusLoading } = trpc.user.isProfileComplete.useQuery();
   const { data: profileData, isLoading: isProfileLoading } = trpc.user.getProfile.useQuery();
   const isProfileComplete = profileStatus?.isComplete;
+  const [activeTab, setActiveTab] = useState<string>(isProfileComplete ? 'products' : 'profile');
 
   // Handle tab changes with profile completion check
   const handleTabChange = (value: string) => {
@@ -80,6 +81,7 @@ export default function DashboardMain() {
       });
       return;
     }
+    setActiveTab(value);
   };
 
   // Combine the isPending states into one
@@ -202,6 +204,7 @@ export default function DashboardMain() {
       )}
 
       <Tabs 
+        value={activeTab}
         defaultValue={isProfileComplete ? 'products' : 'profile'}
         onValueChange={handleTabChange}
       >
@@ -265,6 +268,7 @@ export default function DashboardMain() {
                       description: "You can now access all features.",
                       variant: "default",
                     });
+                    setActiveTab('products');
                   }}
                 />
               </CardContent>

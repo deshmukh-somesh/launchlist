@@ -79,7 +79,11 @@ export default function UserProfileForm({
       
       // Add a small delay to ensure queries are refetched
       await new Promise(resolve => setTimeout(resolve, 100));
-      onComplete?.();
+      
+      // Make sure onComplete is called
+      if (onComplete) {
+        onComplete();
+      }
     },
     onError: (error) => {
       toast({
