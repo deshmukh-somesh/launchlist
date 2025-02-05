@@ -19,6 +19,7 @@ import {
   UserCircle,
   CheckCircle,
   User,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -184,8 +185,20 @@ export default function DashboardMain() {
   }
 
   return (
-    // Add a wrapper div with a specific className to control initial position
     <div className="pt-6 space-y-6">
+      {/* Add Back Button */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/')}
+          className="text-gray-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Home
+        </Button>
+      </div>
+
       {/* <DashboardNav /> */}
 
       {/* Profile Completion Banner */}

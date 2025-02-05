@@ -75,15 +75,15 @@ export default function ProductPage() {
         <div className="min-h-screen bg-[#151725]">
             <MaxWidthWrapper className="py-8">
                 {/* Back Button */}
-                <div className="mb-6">
+                <div className="flex items-center gap-4 mb-6">
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.back()}
+                        onClick={() => router.push('/dashboard')}
                         className="text-gray-400 hover:text-white transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
+                        Back to Dashboard
                     </Button>
                 </div>
 
