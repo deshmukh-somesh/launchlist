@@ -6,7 +6,7 @@ import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, MessageCircle, Heart, ArrowLeft } from "lucide-react";
+import { ExternalLink, MessageCircle, Heart, ArrowLeft, Twitter, Linkedin, Instagram, Share2 } from "lucide-react";
 import { formatDistance } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +14,8 @@ import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { useState } from "react";
 import CommentSection from "@/components/CommentSection";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
+import { toast } from "@/components/ui/use-toast";
+import { ShareButtons } from "@/components/ShareButtons";
 
 export default function ProductPage() {
     const { slug } = useParams();
@@ -36,6 +38,36 @@ export default function ProductPage() {
         },
     });
 
+    // const handleShare = async (platform: 'twitter' | 'linkedin' | 'instagram' | 'copy') => {
+    //     const url = window.location.href;
+    //     const text = `Check out ${product?.name} - ${product?.tagline}`;
+        
+
+    //     switch (platform) {
+    //         case 'twitter':
+    //             window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+    //             break;
+    //         case 'linkedin':
+    //             window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`);
+    //             break;
+    //         case 'instagram':
+    //             // Instagram doesn't have a direct share URL, so we'll copy the link
+    //             await navigator.clipboard.writeText(url);
+    //             toast({
+    //                 title: "Link copied!",
+    //                 description: "Share this link on Instagram",
+    //             });
+    //             break;
+    //         case 'copy':
+    //             await navigator.clipboard.writeText(url);
+    //             toast({
+    //                 title: "Link copied!",
+    //                 description: "Link copied to clipboard",
+    //             });
+    //             break;
+    //     }
+    // };
+
     if (isLoading) return <LoadingSkeleton variant="product" />;
     if (!product) return <div>Product not found</div>;
 
@@ -56,9 +88,14 @@ export default function ProductPage() {
                 </div>
 
                 <div className="bg-[#1A1C2E] border border-[#2A2B3C] rounded-xl p-6">
+                    <div className="flex justify-end mb-4">
+                        <ShareButtons title={product.name} description={product.tagline} />
+                    </div>
                     {/* Product Header */}
                     <div className="flex flex-col md:flex-row gap-6">
+
                         {/* Thumbnail */}
+
                         <div className="w-full md:w-1/3">
                             {product.thumbnail ? (
                                 <Image
@@ -146,6 +183,43 @@ export default function ProductPage() {
                                     </a>
                                 </Button>
                             </div>
+
+                            {/* <div className="flex items-center gap-2 mt-4">
+                                <span className="text-sm text-gray-400">Share:</span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShare('twitter')}
+                                    className="hover:text-[#1DA1F2]"
+                                >
+                                    <Twitter className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShare('linkedin')}
+                                    className="hover:text-[#0A66C2]"
+                                >
+                                    <Linkedin className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShare('instagram')}
+                                    className="hover:text-[#E4405F]"
+                                >
+                                    <Instagram className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShare('copy')}
+                                    className="hover:text-[#6E3AFF]"
+                                >
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </div> */}
+
                         </div>
                     </div>
 
