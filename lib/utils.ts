@@ -18,7 +18,7 @@ export function constructMetadata({
   title = "ProductLaunches - Discover & Vote on Today's Best Products | Daily Product Launch Platform",
   description = "Join ProductLaunches to discover and vote on the most exciting product launches every day. A community-driven platform showcasing innovative startups, tools, and apps. Launch your product, get feedback, and connect with early adopters.",
   image = "/thumbnail.png",
-  icons = "/icon.ico",
+  icons = "/favicon-96x96.png",
   noIndex = false,
   keywords = "product launches, product hunt alternative, startup launches, daily products, tech products, indie makers, product discovery, startup community, product feedback, launch platform, new products, product voting"
 }: {
