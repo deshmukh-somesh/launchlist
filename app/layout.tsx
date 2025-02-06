@@ -6,6 +6,8 @@ import "simplebar-react/dist/simplebar.min.css";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import { Metadata } from 'next'
+import Script from 'next/script'
 
 // Initialize the font - keeping Inter for clean typography
 const inter = Inter({ subsets: ["latin"] });
@@ -20,6 +22,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <Script
+          defer
+          data-website-id="67a45af3ffcad047bba3873c"
+          data-domain="www.productlaunches.in"
+          src="https://datafa.st/js/script.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <Providers>
         <body
           className={cn(
