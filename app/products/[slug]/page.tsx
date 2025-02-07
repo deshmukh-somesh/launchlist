@@ -103,7 +103,7 @@ export default function ProductPage() {
                                     alt={product.name}
                                     width={400}
                                     height={300}
-                                    className="rounded-lg object-cover w-full aspect-video"
+                                    className="rounded-lg object-contain w-full aspect-video"
                                 />
                             ) : (
                                 <div className="w-full aspect-video bg-[#1A1C2E] rounded-lg" />
