@@ -385,7 +385,10 @@ export default function ProductForm({ initialData, productId, isEditing = false,
               }
             })}
             min={minDate}
-            className={inputClasses}
+            className={cn(
+              inputWrapper(!!errors.launchDate),
+              "[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-70"
+            )}
             disabled={readonly}
           />
           {errors.launchDate && (

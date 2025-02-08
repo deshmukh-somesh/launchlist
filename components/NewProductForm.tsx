@@ -316,7 +316,10 @@ export default function NewProductForm() {
               }
             })}
             min={minDate}
-            className={inputWrapper(!!errors.launchDate)}
+            className={cn(
+              inputWrapper(!!errors.launchDate),
+              "[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-70"
+            )}
             disabled={isSubmitting}
           />
           {errors.launchDate && (
