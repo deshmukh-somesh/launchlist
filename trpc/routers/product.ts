@@ -784,8 +784,32 @@ export const productRouter = router({
         });
       }
 
-      return db.product.delete({
-        where: { id: input.productId }
+      // Delete all related records in a transaction
+      return db.$transaction(async (tx) => {
+        // Delete categories associations
+        await tx.categoriesOnProducts.deleteMany({
+          where: { productId: input.productId }
+        });
+
+        // Delete votes
+        await tx.vote.deleteMany({
+          where: { productId: input.productId }
+        });
+
+        // Delete comments
+        await tx.comment.deleteMany({
+          where: { productId: input.productId }
+        });
+
+        // Delete product images
+        await tx.productImage.deleteMany({
+          where: { productId: input.productId }
+        });
+
+        // Finally delete the product
+        return tx.product.delete({
+          where: { id: input.productId }
+        });
       });
     }),
 

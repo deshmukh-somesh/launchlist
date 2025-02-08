@@ -90,6 +90,9 @@ export default function DashboardMain() {
   const [selectedProduct, setSelectedProduct] = useState<DashboardProduct | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
+  // Add isDeleting state
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+
   const launchProduct = trpc.product.launch.useMutation({
     onSuccess: async (data) => {
       toast({
@@ -113,9 +116,10 @@ export default function DashboardMain() {
     }
   });
 
-  // Add the delete mutation
+  // Update the delete mutation
   const deleteProduct = trpc.product.delete.useMutation({
     onSuccess: async () => {
+      setDeletingProductId(null); // Reset loading state
       toast({
         title: 'Product deleted successfully!',
         variant: 'default',
@@ -123,6 +127,7 @@ export default function DashboardMain() {
       await utils.product.getDashboardProducts.invalidate();
     },
     onError: (error) => {
+      setDeletingProductId(null); // Reset loading state
       toast({
         title: 'Error deleting product',
         description: error.message,
@@ -131,8 +136,9 @@ export default function DashboardMain() {
     }
   });
 
-  // Add the handleDelete function
+  // Update the handleDelete function
   const handleDelete = (productId: string) => {
+    setDeletingProductId(productId);
     deleteProduct.mutate({ productId });
   };
 
@@ -427,8 +433,16 @@ export default function DashboardMain() {
                                           <AlertDialogAction
                                             onClick={() => handleDelete(product.id)}
                                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            disabled={deletingProductId === product.id}
                                           >
-                                            Delete
+                                            {deletingProductId === product.id ? (
+                                              <div className="flex items-center gap-2">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Deleting...
+                                              </div>
+                                            ) : (
+                                              'Delete'
+                                            )}
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
