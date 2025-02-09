@@ -133,7 +133,7 @@ export const generateStructuredData = (type: 'website' | 'product' | 'organizati
 }
 
 export function constructMetadata({
-  title = "ProductLaunches - Discover & Vote on Today's Best Products | Daily Product Launch Platform",
+  title = "Product Launches - Discover & Vote on Today's Best Products | Daily Product Launch Platform",
   description = descriptionTemplates.default,
   image = "/thumbnail.png",
   icons = "/favicon-96x96.png",
