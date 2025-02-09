@@ -449,11 +449,33 @@ export const productRouter = router({
       thumbnail: z.string().nullable(),
       pricing: z.enum(['FREE', 'PAID', 'SUBSCRIPTION']),
       launchDate: z.string()
-        .transform((str) => getUTCDate(new Date(str)))
+        .transform((str) => {
+          // Get the date at start of day in UTC
+          const date = new Date(str);
+          return new Date(Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate(),
+            0, 0, 0, 0
+          ));
+        })
         .refine((date) => {
-          const nowUTC = getUTCDate(new Date());
-          const maxDateUTC = getUTCDate(addDays(nowUTC, 14));
-          return date > nowUTC && date <= maxDateUTC;
+          // Get tomorrow and max date at start of day in UTC
+          const now = new Date();
+          const tomorrowUTC = new Date(Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate() + 1,
+            0, 0, 0, 0
+          ));
+          const maxDateUTC = new Date(Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate() + 14,
+            23, 59, 59, 999
+          ));
+          
+          return date >= tomorrowUTC && date <= maxDateUTC;
         }, {
           message: "Launch date must be between tomorrow and 14 days from now (UTC)"
         }),
