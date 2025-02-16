@@ -1,3 +1,7 @@
+### For Products in development: 
+Great to hear you're building [product name]! When you're ready to launch, ProductLaunches.in would be happy to help showcase it. You can join our waitlist at [waitlist link] to get early access and launch support. In the meantime, feel free to check out our resources for pre-launch marketing at [resource link].
+
+
 ### INITIAL OUTREACH:
 
 Hi @[username], saw your new product [product name]! Would love to have you launch it on https://productlaunches.in. We're a startup helping makers market their products for free. It would be great to see your launch on the site. Thank you!

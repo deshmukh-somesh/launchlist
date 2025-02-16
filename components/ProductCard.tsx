@@ -48,12 +48,13 @@ interface ProductCardProps {
     isTied?: boolean;
     showVoting?: boolean;
     disableVoting?: boolean;
+    isDashboard?: boolean;
 }
 
 const voteQueue = new Set<string>();
 let isProcessingQueue = false;
 
-export default function ProductCard({ product, variant = 'default', rank, isTied, showVoting, disableVoting }: ProductCardProps) {
+export default function ProductCard({ product, variant = 'default', rank, isTied, showVoting, disableVoting, isDashboard }: ProductCardProps) {
     const utils = trpc.useContext();
     const [optimisticVotes, setOptimisticVotes] = useState(product._count?.votes || 0);
     const [hasVoted, setHasVoted] = useState(product.hasVoted || false);
@@ -195,7 +196,7 @@ export default function ProductCard({ product, variant = 'default', rank, isTied
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="min-w-0">
                             <Link
-                                href={`/products/${product.slug}`}
+                                href={`/products/${product.slug}?from=${isDashboard ? 'dashboard' : 'home'}`}
                                 className="inline-block text-lg sm:text-xl font-semibold text-white hover:text-[#6E3AFF] transition-colors line-clamp-1"
                             >
                                 {product.name}

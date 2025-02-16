@@ -1,7 +1,7 @@
 "use client";
 
 import { trpc } from "@/app/_trpc/client";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,8 @@ import { ShareButtons } from "@/components/ShareButtons";
 export default function ProductPage() {
     const { slug } = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const from = searchParams.get('from'); // Get the 'from' parameter
     const { isAuthenticated, user } = useKindeBrowserClient();
     const [showComments, setShowComments] = useState(false);
 
@@ -74,16 +76,15 @@ export default function ProductPage() {
     return (
         <div className="min-h-screen bg-[#151725]">
             <MaxWidthWrapper className="py-8">
-                {/* Back Button */}
                 <div className="flex items-center gap-4 mb-6">
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.push('/dashboard')}
+                        onClick={() => router.push(from === 'dashboard' ? '/dashboard' : '/')}
                         className="text-gray-400 hover:text-white transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Dashboard
+                        {from === 'dashboard' ? 'Back to Dashboard' : 'Back'}
                     </Button>
                 </div>
 
