@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
 import { Metadata } from 'next'
 import Script from 'next/script'
+import { Analytics } from '@vercel/analytics/next'
 
 // Initialize the font - keeping Inter for clean typography
 const inter = Inter({ subsets: ["latin"] });
@@ -60,6 +61,9 @@ export default function RootLayout({
                  backgroundImage: 'radial-gradient(circle at top right, #6E3AFF 0%, transparent 70%)',
                }} 
           />
+
+          {/* Vercel Web Analytics */}
+          <Analytics />
         </body>
       </Providers>
     </html>
